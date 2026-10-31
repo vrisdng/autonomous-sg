@@ -12,6 +12,19 @@ function parse(value:any):SwipeState{
  if(venues.some((v:Place|null)=>!v))throw new Error('Could not read the shared shortlist.');
  return {...value,venues};
 }
+// The feed adds cards with no swipe screen open, so this reads the live deck, not hook state.
+export async function addToDeck(plan:PlanDraft,place:Place,shortlist:Place[]){
+ const token=plan.remote?.hostToken;
+ if(plan.remote?.role==='guest'||!token)throw new Error('Only the host can add restaurants to the swipe.');
+ const raw=await callRemoteRpc('get_swipe_state',{p_code:plan.code}),deck=raw?parse(raw):empty;
+ if(deck.venues.some(v=>v.id===place.id))return false;
+ if(deck.venues.length){await callRemoteRpc('refresh_swipe_deck',{p_code:plan.code,p_token:token,p_venues:[persistedVenue(place)],p_expected:deck.venues.map(persistedVenue),p_append:true});return true;}
+ // Nobody has opened the deck yet. Start it as the swipe screen would, with this place first.
+ const voterId=plan.remote?.participantId?`guest:${plan.remote.participantId}`:'host';
+ const saved=await AsyncStorage.getItem(`bojio.swipes.v1:${plan.code}:${voterId}`),local=saved?parse(JSON.parse(saved)):empty;
+ await callRemoteRpc('start_swipe_deck_with_progress',{p_code:plan.code,p_token:token,p_venues:[place,...(local.venues.length?local.venues:shortlist)].slice(0,20).map(persistedVenue),p_swipes:local.swipes.filter(s=>s.voterId===voterId)});
+ return true;
+}
 export function useSwipes(plan:PlanDraft){
  const [state,setState]=useState<SwipeState>(empty),[error,setError]=useState(''),[busy,setBusy]=useState(false),[loaded,setLoaded]=useState(false);
  const shared=!!plan.remote?.published,token=plan.remote?.role==='guest'?plan.remote.guestToken:plan.remote?.hostToken;

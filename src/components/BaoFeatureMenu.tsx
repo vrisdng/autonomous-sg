@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { RefObject, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Ellipse, Path } from 'react-native-svg';
 import { BAO_BODY, BAO_CHEEK, BAO_CREAM, BAO_INK, BAO_PLEATS } from './baoArt';
@@ -13,7 +13,7 @@ const launcher = { width: 76, height: 74 };
 const dragThreshold = 4;
 
 // Drag anywhere, tap to open. A short press stays a tap; only real movement starts a drag.
-export function BaoLauncher({ onPress }: { onPress: (center: Point) => void }) {
+export function BaoLauncher({ onPress, centerRef, dropping, over }: { onPress: (center: Point) => void; centerRef: RefObject<Point | undefined>; dropping: boolean; over: boolean }) {
   const { width, height } = useWindowDimensions();
   const [dragged, setDragged] = useState<Point>();
   const reduced = useReducedMotion();
@@ -37,6 +37,7 @@ export function BaoLauncher({ onPress }: { onPress: (center: Point) => void }) {
   const position = clamp(dragged ?? { x: Math.min(width, (width + 720) / 2) - launcher.width - 12, y: height - launcher.height - 84 });
   const live = useRef({ position, clamp });
   live.current = { position, clamp };
+  centerRef.current = { x: position.x + launcher.width / 2, y: position.y + launcher.height / 2 };
   const origin = useRef(position);
   // The browser still fires a click when a drag ends. It must not open the menu.
   const justDragged = useRef(false);
@@ -49,10 +50,10 @@ export function BaoLauncher({ onPress }: { onPress: (center: Point) => void }) {
     onPanResponderTerminate: endDrag,
     onPanResponderTerminationRequest: () => false,
   })).current;
-  return <Animated.View {...pan.panHandlers} style={[styles.launcher, styles.launcherGrab, { left: position.x, top: position.y, transform: [{ translateY: bob }] }]}>
+  return <Animated.View {...pan.panHandlers} style={[styles.launcher, styles.launcherGrab, { left: position.x, top: position.y, transform: [{ translateY: bob }, { scale: over ? 1.3 : dropping ? 1.12 : 1 }] }]}>
     <Pressable accessibilityRole="button" accessibilityLabel="Open Bojio features with Bao" onPress={() => { if (!justDragged.current) onPress({ x: position.x + launcher.width / 2, y: position.y + launcher.height / 2 }); }} style={({ pressed }) => [styles.launcherButton, pressed && styles.pressed]}>
       <View style={styles.launcherFace}><BaoFace size={54} /></View>
-      <Text style={styles.launcherText}>Jio with Bao</Text>
+      <Text style={styles.launcherText}>{dropping ? 'Add to swipe' : 'Jio with Bao'}</Text>
     </Pressable>
   </Animated.View>;
 }

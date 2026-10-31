@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { BaoFace } from '../components/BaoFeatureMenu';
 import { FeedView } from '../components/DiscoveryNav';
+import { DraggablePost, PostDragControls } from '../components/PostDrag';
 import { Post, posts, Topic, topics } from '../data/feedPosts';
 
 export type { Post };
@@ -21,11 +22,13 @@ function Cover({ post, height, large }: { post: Post; height: number; large?: bo
   return <View style={[styles.textCover, { height, backgroundColor: post.tint }]}><Text numberOfLines={large ? undefined : 5} style={[styles.textCoverTitle, large && styles.textCoverLarge]}>{post.title}</Text></View>;
 }
 
-export function DiscoveryScreen({ view, selected, onSelect, onJio, onTripHome }: {
+export function DiscoveryScreen({ view, selected, drag, onSelect, onJio, onAddToSwipe, onTripHome }: {
   view: FeedPage;
   selected?: Post;
+  drag: PostDragControls;
   onSelect: (post?: Post) => void;
   onJio: (post: Post) => void;
+  onAddToSwipe: (post: Post) => void;
   onTripHome: (post: Post) => void;
 }) {
   const [topic, setTopic] = useState<Topic>('All');
@@ -51,10 +54,10 @@ export function DiscoveryScreen({ view, selected, onSelect, onJio, onTripHome }:
       {visible.length ? <View style={styles.grid}>
         {[visible.filter((_, index) => index % 2 === 0), visible.filter((_, index) => index % 2 === 1)].map((column, index) => <View key={index} style={styles.column}>
           {column.map(post => <View key={post.title} style={styles.post}>
-            <Pressable accessibilityRole="button" accessibilityLabel={`Open post: ${post.title}`} onPress={() => onSelect(post)} style={({ pressed }) => [styles.postLink, pressed && styles.pressed]}>
+            <DraggablePost post={post} drag={drag} label={`Open post: ${post.title}`} onOpen={() => onSelect(post)}>
               <Cover post={post} height={post.height} />
               {post.image ? <Text numberOfLines={2} style={styles.postTitle}>{post.title}</Text> : null}
-            </Pressable>
+            </DraggablePost>
             <View style={styles.postFoot}>
               <Avatar name={post.author} size={20} />
               <Text numberOfLines={1} style={styles.author}>{post.author}</Text>
@@ -89,12 +92,13 @@ export function DiscoveryScreen({ view, selected, onSelect, onJio, onTripHome }:
                 <View style={styles.action}><Text style={styles.actionText}>💬 {selected.comments.length}</Text></View>
               </View>
               <Pressable accessibilityRole="button" accessibilityLabel="Jio friends with Bao" onPress={() => onJio(selected)} style={({ pressed }) => [styles.jio, pressed && styles.pressed]}><BaoFace size={38} /><View style={styles.jioCopy}><Text style={styles.jioTitle}>Jio friends with Bao</Text><Text style={styles.jioDetail}>Share this post, then swipe the restaurant shortlist together</Text></View><Text style={styles.jioArrow}>›</Text></Pressable>
+              {selected.place ? <Pressable accessibilityRole="button" accessibilityLabel={`Add ${selected.place.name} to the party swipe`} onPress={() => onAddToSwipe(selected)} style={({ pressed }) => [styles.addSwipe, pressed && styles.pressed]}><View style={styles.jioCopy}><Text style={styles.addSwipeTitle}>Add to the party swipe</Text><Text style={styles.jioDetail}>Bao's pick: {selected.place.name}. You can also drag a post onto Bao from the feed.</Text></View><Text style={styles.jioArrow}>+</Text></Pressable> : null}
               {selected.topic === 'Getting home' ? <Pressable accessibilityRole="button" accessibilityLabel="Check the trip home" onPress={() => onTripHome(selected)} style={({ pressed }) => [styles.tripHome, pressed && styles.pressed]}><Text style={styles.tripHomeText}>Check the trip home ›</Text></Pressable> : null}
               <Text style={styles.sectionTitle}>Comments</Text>
               {selected.comments.map(([who, text]) => <View key={who + text} style={styles.comment}><Avatar name={who} size={28} /><View style={styles.commentCopy}><Text style={styles.commentName}>{who}</Text><Text style={styles.commentText}>{text}</Text></View></View>)}
               <Text style={styles.sectionTitle}>More like this</Text>
               <View style={styles.more}>{moreLikeThis.map(post => <Pressable key={post.title} accessibilityRole="button" accessibilityLabel={`Open post: ${post.title}`} onPress={() => onSelect(post)} style={({ pressed }) => [styles.moreItem, pressed && styles.pressed]}><Cover post={post} height={130} /><Text numberOfLines={2} style={styles.moreTitle}>{post.title}</Text></Pressable>)}</View>
-              <Text style={styles.disclaimer}>Illustrative post for the Apple67 demo.</Text>
+              <Text style={styles.disclaimer}>{selected.place ? 'Illustrative post for the Apple67 demo, not a review of this restaurant.' : 'Illustrative post for the Apple67 demo.'}</Text>
             </ScrollView>
           </> : null}
         </View>
@@ -109,7 +113,7 @@ const styles = StyleSheet.create({
   topicButton: { paddingVertical: 7 }, topicText: { color: '#888888', fontSize: 14, fontWeight: '500' }, topicActive: { color: '#181818', fontWeight: '800' },
   searchInput: { marginTop: 10, marginHorizontal: 2, paddingHorizontal: 15, height: 45, borderRadius: 22, backgroundColor: '#F4F4F4', fontSize: 14 },
   grid: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 }, column: { flex: 1, gap: 18 },
-  post: { gap: 6 }, postLink: { gap: 6 }, photo: { width: '100%', borderRadius: 12, backgroundColor: '#EEEEEE' },
+  post: { gap: 6 }, photo: { width: '100%', borderRadius: 12, backgroundColor: '#EEEEEE' },
   textCover: { width: '100%', borderRadius: 12, padding: 16, justifyContent: 'center' },
   textCoverTitle: { color: '#161616', fontSize: 19, lineHeight: 24, fontWeight: '900' }, textCoverLarge: { fontSize: 30, lineHeight: 36 },
   postTitle: { color: '#161616', fontSize: 15, lineHeight: 20, fontWeight: '800', paddingHorizontal: 4 },
@@ -141,6 +145,7 @@ const styles = StyleSheet.create({
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 }, tag: { color: '#76680A', fontSize: 14, fontWeight: '700' },
   actions: { flexDirection: 'row', gap: 8 }, action: { flex: 1, minHeight: 44, borderRadius: 14, backgroundColor: '#F5F5F5', alignItems: 'center', justifyContent: 'center' }, actionOn: { backgroundColor: '#FFE900' }, actionText: { color: '#111111', fontSize: 14, fontWeight: '800' },
   jio: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#FFF9C2', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10 },
+  addSwipe: { minHeight: 60, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E5D94A', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10 }, addSwipeTitle: { color: '#111111', fontSize: 15, fontWeight: '900' },
   jioCopy: { flex: 1 }, jioTitle: { color: '#111111', fontSize: 16, fontWeight: '900' }, jioDetail: { color: '#555555', fontSize: 12, lineHeight: 17, marginTop: 2 }, jioArrow: { color: '#555555', fontSize: 25 },
   tripHome: { minHeight: 44, alignItems: 'center', justifyContent: 'center' }, tripHomeText: { color: '#333333', fontSize: 14, fontWeight: '800' },
   comment: { flexDirection: 'row', gap: 10 }, commentCopy: { flex: 1 }, commentName: { color: '#555555', fontSize: 12, fontWeight: '700' }, commentText: { color: '#222222', fontSize: 14, lineHeight: 20, marginTop: 1 },
