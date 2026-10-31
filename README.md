@@ -23,7 +23,7 @@ npm start
 
 Scan the QR code with Expo Go. You can also run `npm run web` for a browser preview.
 
-For the web demo, open `http://localhost:8081/#discover` after `npm run web`. The twelve posts and feed profile/activity are illustrative; Search filters posts, post details can be liked locally, and Create previews a post without publishing it. Tap **Jio with Bao** to open the Bojio feature menu, or tap **Jio friends with Bao** on a post to start a party whose invite leads with that post. Posts are illustrative, so they do not filter the restaurant shortlist. From there, create a party, share its invite and continue to Meet to swipe the shared restaurant shortlist. Shared plans, group votes, bills and journeys use the existing Bojio flows.
+For the web demo, open `http://localhost:8081/#discover` after `npm run web`. The twelve posts and feed profile/activity are illustrative; Search filters posts, post details can be liked locally, and Create previews a post without publishing it. Tap **Jio with Bao** to open its drop-down. With no party the only option is **Create party**, which leads to the invite page: copy the link, or tap + on a sample friend to add them to the roster. Go back and tap Bao again for **Makan Swipe**, **Same Way, Can Share?** (the Grab handoff) and **SplitLink**. You can also tap **Jio friends with Bao** on a post to start a party whose invite leads with that post. Posts are illustrative, so they do not filter the restaurant shortlist. Shared plans, group votes, bills and journeys use the existing Bojio flows.
 
 Run `npm test` for the calculation and plan-link regression suite, and `npm run typecheck` for the strict TypeScript check.
 

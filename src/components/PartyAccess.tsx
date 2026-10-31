@@ -11,19 +11,20 @@ import { joinParty, loadRemotePlan, prepareRemoteHost, publishRemotePlan } from 
 import { copyPlainText } from '../features/clipboard';
 import { createPlanInviteMessage, createPlanShareUrl, getPlanCodeFromUrl, isPlanCode, normalizePlanCode } from '../features/plans/links';
 import { serializePlan } from '../features/meet/googlePlace';
-import { keepConfirmedHomes } from '../features/plans/mergeOuting';
+import { keepConfirmedHomes, mergeOuting } from '../features/plans/mergeOuting';
+import { addFriendToPlan, demoFriends, isInParty } from '../features/plans/friends';
 import { PlanDraft } from '../types';
 import { colors } from '../theme';
 
 const newToken=()=>Crypto.randomUUID().replace(/-/g,'')+Crypto.randomUUID().replace(/-/g,'');
-export function PartyAccess({code,fromPost,onClose,onEntered}:{code?:string;fromPost?:string;onClose:()=>void;onEntered:()=>void}) {
+export function PartyAccess({code,start,fromPost,onClose,onEntered}:{code?:string;start?:'create'|'invite';fromPost?:string;onClose:()=>void;onEntered:()=>void}) {
  const [party,setParty]=useState<PlanDraft>();
  const [current,setCurrent]=useState<PlanDraft|null>();
  const [name,setName]=useState(''),[input,setInput]=useState(code??'');
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
- const [creating,setCreating]=useState(false);
+ const [creating,setCreating]=useState(start==='create');
  const [joining,setJoining]=useState(false);
- const [sharing,setSharing]=useState(false);
+ const [sharing,setSharing]=useState(start==='invite');
  const [justCreated,setJustCreated]=useState(false);
  const [copied,setCopied]=useState<'link'|'code'|'invite'|''>('');
  const [fallback,setFallback]=useState('');
@@ -123,6 +124,14 @@ export function PartyAccess({code,fromPost,onClose,onEntered}:{code?:string;from
  };
  const continueParty=()=>void run(async()=>{if(party)await resume(party);});
  const resumeHost=()=>void run(async()=>{if(!party||!hostBackup)return;await enter({...party,remote:{role:'host',hostToken:hostBackup.hostToken,participantId:hostBackup.participantId,published:true}});});
+ const addFriend=(friend:string)=>void run(async()=>{
+  if(!shared)return;
+  // Guests may have joined since this page loaded; a stale revision would be rejected.
+  const latest=mergeOuting(shared,await loadRemotePlan(shared.code,shared.remote));
+  const saved={...await publishRemotePlan(addFriendToPlan(latest,friend,Crypto.randomUUID())),pendingSync:false};
+  await savePlanDraft(saved);
+  if(active.current)setCurrent(saved);
+ });
  const copy=(value:string,kind:'link'|'code'|'invite')=>{
   void (async()=>{
    if(!active.current)return;
@@ -191,6 +200,16 @@ export function PartyAccess({code,fromPost,onClose,onEntered}:{code?:string;from
       {shared.status!=='closed'?<Pressable accessibilityRole="button" accessibilityLabel="Invite friends" disabled={busy} onPress={!busy?()=>{setSharing(true);setCopied('');setFallback('');}:undefined} style={s.copyBtn}><Text style={s.copyText}>Invite friends</Text></Pressable>:null}
      </>}
     </View>:null}
+    {inviting&&shared&&shared.status!=='closed'?<View style={s.friends}>
+     <Text style={s.label}>Friends</Text>
+     <Text style={s.note}>{shared.remote?.role==='host'?'Tap + to group a friend into this party. They pick their name when they open the invite. Sample names for this demo.':'Only the host can add friends here. Copy the invite link to bring someone in.'}</Text>
+     {shared.remote?.role==='host'?demoFriends.map(friend=>{const added=isInParty(shared,friend);return <View key={friend} style={s.friend}>
+      <View style={s.avatar}><Text style={s.avatarText}>{friend[0]}</Text></View>
+      <Text style={s.friendName}>{friend}</Text>
+      {added?<Text accessibilityLabel={`${friend} is in the party`} style={s.friendAdded}>✓ In party</Text>:<Pressable accessibilityRole="button" accessibilityLabel={`Add ${friend} to party`} disabled={busy} onPress={!busy?()=>addFriend(friend):undefined} style={({pressed})=>[s.friendAdd,busy&&{opacity:0.5},pressed&&{opacity:0.7}]}><Text style={s.friendPlus}>+</Text></Pressable>}
+     </View>;}):null}
+    </View>:null}
+    {inviting?<Button secondary label="← Back to For You" onPress={!busy?onClose:undefined}/>:null}
     {inviting?<View style={s.copyRow}>
      <Pressable accessibilityRole="button" accessibilityLabel="Create a new party" disabled={busy} onPress={!busy?startNew:undefined} style={s.copyBtn}><Text style={s.quiet}>Create a new party</Text></Pressable>
      <Text style={s.copyDot}>·</Text>
@@ -216,4 +235,4 @@ export function PartyAccess({code,fromPost,onClose,onEntered}:{code?:string;from
   </ScrollView>
  </Modal>;
 }
-const s=StyleSheet.create({page:{padding:24,paddingTop:40,gap:16,width:'100%',maxWidth:560,alignSelf:'center',backgroundColor:colors.paper},heading:{flexDirection:'row',alignItems:'center',gap:12},title:{flex:1,fontSize:27,fontWeight:'900',color:colors.ink},label:{fontWeight:'800',fontSize:15,color:colors.ink},kicker:{fontSize:11,letterSpacing:1.2,fontWeight:'800',color:colors.green},lead:{fontSize:15,lineHeight:22,fontWeight:'700',color:colors.ink},note:{fontSize:13,lineHeight:20,color:colors.muted},error:{color:colors.reject,fontSize:14,lineHeight:21},input:{padding:16,borderWidth:1,borderColor:colors.line,borderRadius:14,fontSize:17,backgroundColor:colors.paper},names:{gap:8,flexDirection:'row',flexWrap:'wrap'},name:{maxWidth:'100%'},box:{gap:12,padding:18,borderRadius:20,backgroundColor:colors.bambooSoft},codeChip:{alignSelf:'stretch',backgroundColor:colors.lime,borderRadius:18,paddingVertical:14,paddingHorizontal:12,alignItems:'center'},code:{fontSize:34,fontWeight:'900',letterSpacing:3,color:colors.ink},link:{fontSize:12,lineHeight:18,color:colors.muted},change:{fontSize:13,fontWeight:'700',color:colors.muted},continueBtn:{minHeight:50,borderRadius:18,paddingVertical:14,paddingHorizontal:18,alignItems:'center',justifyContent:'center',backgroundColor:colors.card,borderWidth:1.5,borderColor:colors.line},continueText:{color:colors.green,fontWeight:'800',fontSize:15},copyRow:{flexDirection:'row',alignItems:'center',justifyContent:'center'},copyBtn:{minHeight:44,justifyContent:'center',alignItems:'center',paddingHorizontal:10},copyText:{fontSize:14,fontWeight:'800',color:colors.green},copyDot:{color:colors.muted,fontWeight:'800',fontSize:16},quiet:{fontSize:13,fontWeight:'700',color:colors.muted}});
+const s=StyleSheet.create({page:{padding:24,paddingTop:40,gap:16,width:'100%',maxWidth:560,alignSelf:'center',backgroundColor:colors.paper},heading:{flexDirection:'row',alignItems:'center',gap:12},title:{flex:1,fontSize:27,fontWeight:'900',color:colors.ink},label:{fontWeight:'800',fontSize:15,color:colors.ink},kicker:{fontSize:11,letterSpacing:1.2,fontWeight:'800',color:colors.green},lead:{fontSize:15,lineHeight:22,fontWeight:'700',color:colors.ink},note:{fontSize:13,lineHeight:20,color:colors.muted},error:{color:colors.reject,fontSize:14,lineHeight:21},input:{padding:16,borderWidth:1,borderColor:colors.line,borderRadius:14,fontSize:17,backgroundColor:colors.paper},names:{gap:8,flexDirection:'row',flexWrap:'wrap'},name:{maxWidth:'100%'},box:{gap:12,padding:18,borderRadius:20,backgroundColor:colors.bambooSoft},codeChip:{alignSelf:'stretch',backgroundColor:colors.lime,borderRadius:18,paddingVertical:14,paddingHorizontal:12,alignItems:'center'},code:{fontSize:34,fontWeight:'900',letterSpacing:3,color:colors.ink},link:{fontSize:12,lineHeight:18,color:colors.muted},change:{fontSize:13,fontWeight:'700',color:colors.muted},continueBtn:{minHeight:50,borderRadius:18,paddingVertical:14,paddingHorizontal:18,alignItems:'center',justifyContent:'center',backgroundColor:colors.card,borderWidth:1.5,borderColor:colors.line},continueText:{color:colors.green,fontWeight:'800',fontSize:15},copyRow:{flexDirection:'row',alignItems:'center',justifyContent:'center'},copyBtn:{minHeight:44,justifyContent:'center',alignItems:'center',paddingHorizontal:10},copyText:{fontSize:14,fontWeight:'800',color:colors.green},copyDot:{color:colors.muted,fontWeight:'800',fontSize:16},quiet:{fontSize:13,fontWeight:'700',color:colors.muted},friends:{gap:10},friend:{minHeight:52,flexDirection:'row',alignItems:'center',gap:12},avatar:{width:38,height:38,borderRadius:19,alignItems:'center',justifyContent:'center',backgroundColor:colors.bambooSoft},avatarText:{fontWeight:'900',fontSize:15,color:colors.green},friendName:{flex:1,fontSize:15,fontWeight:'700',color:colors.ink},friendAdded:{fontSize:13,fontWeight:'800',color:colors.green},friendAdd:{width:44,height:44,borderRadius:22,alignItems:'center',justifyContent:'center',backgroundColor:colors.lime},friendPlus:{fontSize:24,lineHeight:26,fontWeight:'700',color:colors.ink}});

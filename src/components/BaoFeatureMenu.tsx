@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Ellipse, Path } from 'react-native-svg';
 import { BAO_BODY, BAO_CHEEK, BAO_CREAM, BAO_INK, BAO_PLEATS } from './baoArt';
 import { feedParty } from '../features/plans/feedParty';
+import { activeParty } from '../features/plans/friends';
 import { useOuting } from '../hooks/useOuting';
 import { Tab } from '../types';
 
@@ -22,29 +23,35 @@ export function FeedPartyStrip({ onOpen }: { onOpen: () => void }) {
   </Pressable>;
 }
 
-export function BaoFeatureMenu({ visible, onClose, onNavigate, onParty }: {
+export function BaoFeatureMenu({ visible, onClose, onNavigate, onCreateParty, onInvite }: {
   visible: boolean;
   onClose: () => void;
   onNavigate: (tab: Tab) => void;
-  onParty: () => void;
+  onCreateParty: () => void;
+  onInvite: () => void;
 }) {
+  const party = activeParty(useOuting().plan);
   const go = (tab: Tab) => { onClose(); onNavigate(tab); };
-  const party = () => { onClose(); onParty(); };
+  const open = (next: () => void) => { onClose(); next(); };
   if (!visible) return null;
   return <View style={styles.overlay} accessibilityViewIsModal>
       <Pressable accessibilityRole="button" accessibilityLabel="Close Bao menu" onPress={onClose} style={styles.scrim} />
-      <View style={styles.panel}>
-        <View style={styles.heading}>
-          <BaoFace size={50} />
-          <View style={styles.headingCopy}><Text style={styles.eyebrow}>BOJIO WITH BAO</Text><Text style={styles.title}>What are we doing?</Text></View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Close Bao menu" onPress={onClose} style={styles.close}><Text style={styles.closeText}>×</Text></Pressable>
+      <View style={styles.column} pointerEvents="box-none">
+        <View style={styles.panel}>
+          <View style={styles.heading}>
+            <BaoFace size={38} />
+            <View style={styles.headingCopy}><Text style={styles.eyebrow}>BOJIO WITH BAO</Text><Text style={styles.title}>What are we doing?</Text></View>
+            <Pressable accessibilityRole="button" accessibilityLabel="Close Bao menu" onPress={onClose} style={styles.close}><Text style={styles.closeText}>×</Text></Pressable>
+          </View>
+          {party ? <>
+            <Pressable accessibilityRole="button" accessibilityLabel={`Party ${party.code}, invite friends`} onPress={() => open(onInvite)} style={({ pressed }) => [styles.party, pressed && styles.pressed]}>
+              <Text style={styles.partyText}>Party {party.code} · {party.participants.length} in</Text><Text style={styles.partyLink}>Invite ›</Text>
+            </Pressable>
+            <MenuItem icon="♡" title="Makan Swipe" detail="Swipe restaurants together, see the Top 3" onPress={() => go('meet')} />
+            <MenuItem icon="◇" title="Same Way, Can Share?" detail="Pool the ride home, then open it in Grab" onPress={() => go('ride')} />
+            <MenuItem icon="＄" title="SplitLink" detail="Claim items and settle the bill" onPress={() => go('split')} />
+          </> : <MenuItem icon="+" title="Create party" detail="Group your friends, share one invite" onPress={() => open(onCreateParty)} />}
         </View>
-        <MenuItem icon="♡" title="Create or join a party" detail="Share one invite with your friends" onPress={party} />
-        <MenuItem icon="◎" title="Meet & swipe" detail="Vote on restaurants and see the Top 3" onPress={() => go('meet')} />
-        <MenuItem icon="＄" title="Split the bill" detail="Claim items and share what everyone owes" onPress={() => go('split')} />
-        <MenuItem icon="◇" title="Share a ride" detail="Find a drop-off plan for the group" onPress={() => go('ride')} />
-        <MenuItem icon="⌁" title="Last Call" detail="Check the trip home" onPress={() => go('train')} />
-        <MenuItem icon="⌂" title="My supper plan" detail="Open the Bojio feature hub" onPress={() => go('home')} />
       </View>
   </View>;
 }
@@ -77,15 +84,20 @@ const styles = StyleSheet.create({
   stripAction: { color: '#111111', fontSize: 13, fontWeight: '800' },
   faceCircle: { backgroundColor: '#FFE900', alignItems: 'center', justifyContent: 'center' },
   pressed: { opacity: 0.7 },
-  overlay: { ...StyleSheet.absoluteFillObject, zIndex: 100, justifyContent: 'flex-end', elevation: 20 },
+  overlay: { ...StyleSheet.absoluteFillObject, zIndex: 100, elevation: 20 },
   scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: '#00000066' },
-  panel: { width: '100%', maxWidth: 720, alignSelf: 'center', backgroundColor: '#FFFFFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 30 },
-  heading: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
+  // Sits just under the header so it reads as dropping from Bao.
+  column: { width: '100%', maxWidth: 720, alignSelf: 'center', alignItems: 'flex-end', paddingTop: 100, paddingHorizontal: 12 },
+  panel: { width: '100%', maxWidth: 340, backgroundColor: '#FFFFFF', borderRadius: 20, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6 },
+  heading: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
   headingCopy: { flex: 1 },
   eyebrow: { color: '#776B2B', fontSize: 10, fontWeight: '900', letterSpacing: 1.1 },
-  title: { color: '#161616', fontSize: 23, fontWeight: '900' },
+  title: { color: '#161616', fontSize: 18, fontWeight: '900' },
   close: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   closeText: { color: '#666666', fontSize: 29 },
+  party: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingHorizontal: 12, marginBottom: 8, borderRadius: 12, backgroundColor: '#FFF8B8' },
+  partyText: { flex: 1, color: '#221D18', fontSize: 13, fontWeight: '800' },
+  partyLink: { color: '#221D18', fontSize: 13, fontWeight: '800' },
   item: { minHeight: 65, flexDirection: 'row', alignItems: 'center', gap: 12, borderTopWidth: 1, borderTopColor: '#EFEFEF' },
   itemIcon: { width: 33, textAlign: 'center', color: '#2B211C', fontSize: 23, fontWeight: '800' },
   itemCopy: { flex: 1 },

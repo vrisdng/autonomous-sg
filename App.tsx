@@ -35,6 +35,7 @@ export default function App() {
   const [jioPost, setJioPost] = useState<Post>();
   const [incomingPlanCode, setIncomingPlanCode] = useState<string | undefined>(() => typeof window !== 'undefined' ? getPlanCodeFromUrl(window.location.href) ?? undefined : undefined);
   const [partyOpen, setPartyOpen] = useState(() => typeof window !== 'undefined' && !!getPlanCodeFromUrl(window.location.href));
+  const [partyStart, setPartyStart] = useState<'create' | 'invite'>();
   const [entryVersion, setEntryVersion] = useState(0);
   const feedScroll = useRef<ScrollView>(null);
   const popupScroll = useRef<ScrollView>(null);
@@ -65,7 +66,7 @@ export default function App() {
       window.history.replaceState(window.history.state, '', url);
     }
   };
-  const openParty = (code?: string) => { if (code) setJioPost(undefined); setIncomingPlanCode(code); setPartyOpen(true); };
+  const openParty = (code?: string, start?: 'create' | 'invite') => { if (code) setJioPost(undefined); setIncomingPlanCode(code); setPartyStart(start); setPartyOpen(true); };
   const jioFromPost = (post: Post) => { setOpenPost(undefined); setJioPost(post); openParty(); };
   const tripHomeFromPost = (post: Post) => { setOpenPost(undefined); setJioPost(post); openBojio('train'); };
   const backToPost = () => { closeBojio(); setOpenPost(jioPost); };
@@ -149,8 +150,8 @@ export default function App() {
       </View>
     </View> : null}
 
-    <BaoFeatureMenu visible={baoOpen} onClose={() => setBaoOpen(false)} onNavigate={openBojio} onParty={() => { setJioPost(undefined); openParty(); }} />
-    {partyOpen || incomingPlanCode ? <PartyAccess key={incomingPlanCode ?? 'party'} code={incomingPlanCode} fromPost={jioPost?.title} onClose={cancelParty} onEntered={() => {
+    <BaoFeatureMenu visible={baoOpen} onClose={() => setBaoOpen(false)} onNavigate={openBojio} onCreateParty={() => { setJioPost(undefined); openParty(undefined, 'create'); }} onInvite={() => { setJioPost(undefined); openParty(undefined, 'invite'); }} />
+    {partyOpen || incomingPlanCode ? <PartyAccess key={incomingPlanCode ?? 'party'} code={incomingPlanCode} start={partyStart} fromPost={jioPost?.title} onClose={cancelParty} onEntered={() => {
       closeParty();
       setEntryVersion(version => version + 1);
       openBojio('meet');
