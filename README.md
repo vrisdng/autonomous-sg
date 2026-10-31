@@ -2,9 +2,9 @@
 
 # Apple67
 
-### Stop screenshotting plans. Start making them.
+### Lemon8 shows you where to go. We get your group there.
 
-Turn a place you found into a night out: **create a party, swipe to decide, share the ride, split the bill, get home.**
+You find a place in the feed. In the same app, you jio your friends, swipe to decide, lock the #1, check last call, share a ride and split the bill.
 
 [![Live demo](https://img.shields.io/badge/live%20demo-autonomous--sg.vercel.app-FFE900?style=for-the-badge&labelColor=111111)](https://autonomous-sg.vercel.app)
 
@@ -14,17 +14,35 @@ Turn a place you found into a night out: **create a party, swipe to decide, shar
 ![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20Edge-3ECF8E?logo=supabase&logoColor=white)
 ![Vercel](https://img.shields.io/badge/Vercel-deployed-000000?logo=vercel&logoColor=white)
 
-**Discover together. Decide together. Go together.**
+<br>
 
-Free to use · MIT licensed · Singapore-first
-
-[Live demo](https://autonomous-sg.vercel.app) · [Quick start](#quick-start) · [How it works](#how-a-night-out-works) · [Architecture](#architecture) · [Business model](#the-business-opportunity-help-interest-become-action) · [Known limits](#7-known-limits)
+| | The night out, step by step | Apps you juggle | Where the interest goes |
+|---|---|:---:|---|
+| **Today** | Post → screenshot → group chat → vote → Grab → Splitwise | **5** | Leaves the platform after the post |
+| **With Apple67** | Post → jio → swipe → pick → ride → split | **1** | Stays on the platform |
 
 <br>
 
-<img src="docs/readme/01-feed.webp" alt="For You feed" width="190"> <img src="docs/readme/06-swipe-deck.webp" alt="Swipe deck" width="190"> <img src="docs/readme/07-top3.webp" alt="Live Top 3" width="190"> <img src="docs/readme/11-split-claim.webp" alt="Split the bill" width="190">
+<a href="docs/readme/demo-swipe-pick.mp4"><img src="docs/readme/demo-swipe-pick.gif" alt="Demo: swipe through restaurants, open the group Top 3, then confirm the #1 place" width="300"></a>
 
-<sub>Real screenshots of the [live demo](https://autonomous-sg.vercel.app) at phone size. Feed posts are labelled demo content; photos from Unsplash.</sub>
+**Swipe, then lock in the group's #1.**<br>
+<sub>Real clip from the [live demo](https://autonomous-sg.vercel.app) · <a href="docs/readme/demo-swipe-pick.mp4">watch the MP4</a></sub>
+
+<br>
+
+</div>
+
+### Why it matters
+
+- **Easier for people.** No more screenshots, group-chat votes and app-hopping just to decide where to eat and how to get home.
+- **Value stays with the platform and the venues.** A post leads to a real group decision in the same app, instead of a screenshot that disappears into a private chat.
+- **One place for the whole night.** From the first “jio?” to the last person heading home, the plan, the vote, the ride and the bill sit together.
+
+<div align="center">
+
+[Live demo](https://autonomous-sg.vercel.app) · [What it does](#what-it-does) · [Quick start](#quick-start) · [How it works](#how-a-night-out-works) · [Architecture](#architecture) · [Business model](#the-business-opportunity-help-interest-become-action) · [Known limits](#7-known-limits)
+
+<sub>Free to use · MIT licensed · Singapore-first · Feed posts are illustrative demo content; photos from Unsplash.</sub>
 
 </div>
 
