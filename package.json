@@ -13,6 +13,7 @@
     "test:database": "node scripts/verify-database.mjs",
     "test:preview": "node scripts/verify-preview.mjs",
     "build:web": "expo export --platform web --clear && node scripts/verify-web-build.mjs",
+    "build:vercel": "EXPO_PUBLIC_SUPABASE_URL=${SUPABASE_URL:-$EXPO_PUBLIC_SUPABASE_URL} EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY:-$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY} EXPO_PUBLIC_SUPABASE_FUNCTIONS_URL=${SUPABASE_FUNCTIONS_URL:-$EXPO_PUBLIC_SUPABASE_FUNCTIONS_URL} EXPO_PUBLIC_SUPABASE_FUNCTIONS_KEY=${SUPABASE_FUNCTIONS_KEY:-$EXPO_PUBLIC_SUPABASE_FUNCTIONS_KEY} npm run build:web",
     "deploy:web": "npm run build:web && wrangler pages deploy dist --project-name bojio --branch main",
     "dev:travel": "node --env-file-if-exists=.env.server --experimental-strip-types scripts/travel-dev.mjs"
   },
