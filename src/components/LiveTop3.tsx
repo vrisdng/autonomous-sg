@@ -111,8 +111,9 @@ const styles = StyleSheet.create({
     right: 4,
     bottom: 4,
     width: 152,
-    zIndex: 3,
-    backgroundColor: 'rgba(250, 244, 237, 0.72)',
+    // Above BaoPeek's overlay (6): the mascot must never cover this button.
+    zIndex: 7,
+    backgroundColor: 'rgba(250, 244, 237, 0.96)',
     borderRadius: 14,
     borderWidth: 1,
     borderColor: 'rgba(205, 184, 159, 0.55)',

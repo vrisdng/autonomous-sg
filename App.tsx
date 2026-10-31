@@ -3,6 +3,8 @@ import { Image, Linking, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSh
 import { retainLastCall } from './src/features/train/lastCallSession';
 import { PartyAccess } from './src/components/PartyAccess';
 import { BaoFeatureMenu, BaoLauncher, FeedPartyStrip } from './src/components/BaoFeatureMenu';
+import { BaoPeek } from './src/components/BaoPeek';
+import { peekSideFromSearch, tabHasInlineBao } from './src/components/baoPeekLogic';
 import { BottomNav } from './src/components/BottomNav';
 import { LiveTop3Dock } from './src/components/LiveTop3';
 import { DiscoveryNav, FeedView } from './src/components/DiscoveryNav';
@@ -145,6 +147,7 @@ export default function App() {
             {screen ? <ScreenTransition key={entryVersion + ':' + tab}>{screen}</ScreenTransition> : null}
           </ScrollView>
           <LiveTop3Dock />
+          {!partyOpen && !incomingPlanCode && !tabHasInlineBao(tab) ? <BaoPeek key={entryVersion + ':' + tab} side={peekSideFromSearch()} /> : null}
         </View>
         <BottomNav active={tab} onChange={openBojio} />
       </View>

@@ -21,7 +21,7 @@ const chainPhotos: Record<string, { placeId: string; venueId: string }> = {
 };
 export function venuePhotoSource(id: string) {
   const chain = chainPhotos[id.split('-')[0]!];
-  return chain ? { placeId: chain.placeId, sameBranch: chain.venueId === id } : undefined;
+  return chain ? { placeId: chain.placeId, sameBranch: chain.venueId === id, branch: verifiedVenues.find((venue) => venue.id === chain.venueId)!.name } : undefined;
 }
 export const verifiedVenues: Place[] = [
   venue('swee-jalan-besar', 'Swee Choon · Jalan Besar', '183–193 Jalan Besar, Singapore 208882', 'Jalan Besar', 1.308215131922868, 103.8569068435072, swee, 'Dim sum. Operator lists late-night service; check today’s last order on its website.'),

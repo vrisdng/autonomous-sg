@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { FlatList, Modal, Pressable, Text, View } from 'react-native';
+import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Place } from '../types';
 import { Choice } from '../features/meet/swipes';
 import { hoursAt } from '../features/meet/googlePlace';
 import { colors } from '../theme';
-import { RestaurantDetails, RestaurantPhoto } from './RestaurantMedia';
+import { RestaurantDetails, RestaurantPhoto, VenueRating } from './RestaurantMedia';
 import { CloseButton } from './Ui';
 
 type FeedProps = {
@@ -36,8 +36,10 @@ export function RestaurantFeed({ visible, places, choices, startId, meetupAt, bu
       list.current?.scrollToIndex({ index: index + 1, animated: true });
     }
   };
-  return <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-    <View style={{ flex: 1, backgroundColor: colors.paper, paddingTop: 24 }}>
+  return <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+    <Pressable accessibilityRole="button" accessibilityLabel="Close restaurant popup" onPress={onClose} style={{ ...StyleSheet.absoluteFillObject, backgroundColor: '#00000099' }} />
+    <View style={{ width: '96%', height: '94%', maxWidth: 720, borderRadius: 22, overflow: 'hidden', backgroundColor: colors.paper, paddingTop: 24 }}>
       <View style={{ paddingHorizontal: 20, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View><Text style={{ fontSize: 22, fontWeight: '900', color: colors.ink }}>Explore places</Text><Text style={{ color: colors.muted, fontSize: 12 }}>Swipe up to browse · tap a photo for details</Text></View>
         <CloseButton label="Close restaurant feed" onPress={onClose} />
@@ -56,14 +58,14 @@ export function RestaurantFeed({ visible, places, choices, startId, meetupAt, bu
           onScrollToIndexFailed={info => list.current?.scrollToOffset({ offset: info.index * pageHeight, animated: false })}
           renderItem={({ item: place, index }) => {
             const choice = choices[place.id];
-            return <View style={{ height: pageHeight, paddingHorizontal: 16, paddingBottom: 12, justifyContent: 'center' }}>
-              <View style={{ backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1, borderRadius: 24, padding: 12, gap: 8 }}>
-                <Pressable accessibilityRole="button" accessibilityLabel={`View photos and reviews for ${place.name}`} onPress={() => setDetails(place)}>
-                  <RestaurantPhoto place={place} height={Math.max(190, Math.min(pageHeight * 0.47, 390))} />
+            return <View style={{ height: pageHeight, paddingHorizontal: 16, paddingBottom: 12 }}>
+              <View style={{ flex: 1, backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1, borderRadius: 24, padding: 12, gap: 8 }}>
+                <Pressable accessibilityRole="button" accessibilityLabel={`View photos and reviews for ${place.name}`} onPress={() => setDetails(place)} style={{ flex: 1, minHeight: 190 }}>
+                  <RestaurantPhoto place={place} fill />
                 </Pressable>
                 <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700' }}>{index + 1} / {places.length} · {place.area}</Text>
                 <Text numberOfLines={2} style={{ color: colors.ink, fontSize: 24, fontWeight: '900' }}>{place.name}</Text>
-                <Text style={{ color: colors.ink, fontSize: 14, fontWeight: '700' }}>★ {place.rating ?? 'Unrated'} · {place.reviewCount ?? 0} ratings · {place.priceLabel ?? 'Price unavailable'}</Text>
+                <VenueRating place={place} style={{ color: colors.ink, fontSize: 14, fontWeight: '700' }} />
                 <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 12 }}>{place.address}</Text>
                 <Text numberOfLines={2} style={{ color: colors.muted, fontSize: 12 }}>{hoursAt(place, meetupAt).label}</Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
@@ -86,6 +88,7 @@ export function RestaurantFeed({ visible, places, choices, startId, meetupAt, bu
         /> : null}
       </View>
       <RestaurantDetails place={details} onClose={() => setDetails(undefined)} />
+    </View>
     </View>
   </Modal>;
 }
