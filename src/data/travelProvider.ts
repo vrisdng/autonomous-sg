@@ -2,6 +2,7 @@ import { GeoLocation, Participant, Place } from '../types';
 import { DriveLeg, RouteResult, TripRequest, validLocation } from '../features/travel/types';
 import { createCoordinator } from '../features/travel/coordinator';
 import { shortlistRidePairs } from '../features/rides/shortlist';
+import { searchPayload } from '../../supabase/functions/_shared/onemapPayload';
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim().replace(/\/$/, '');
 const key = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim();
@@ -76,8 +77,24 @@ const driveWork=createCoordinator<TripRequest,DriveOutcome>((trip)=>tripKey(trip
   const data=await fetchRequest<{legs:({id:string}&DriveOutcome)[]}>({action:'drive',trips:items.map((item,index)=>({...item,id:String(index)}))},signal);
   return items.map((_,index)=>noteQuota(data.legs.find((leg)=>leg.id===String(index))??{failure:'unavailable'}));
 });
+// OneMap's search still answers without a token and allows any origin; routes do not.
+// Cards stay hidden until a home is saved, so an undeployed function must not block that step.
+async function publicSearch(query: string, signal?: AbortSignal) {
+  const params = new URLSearchParams({ searchVal: query, returnGeom: 'Y', getAddrDetails: 'Y', pageNum: '1' });
+  const response = await fetch(`https://www.onemap.gov.sg/api/common/elastic/search?${params}`, { signal });
+  const data = await response.json().catch(() => undefined);
+  if (!response.ok || !Array.isArray(data?.results)) throw new TravelError('unavailable', 'Address search is unavailable right now. Please retry.');
+  return { locations: searchPayload(data) };
+}
+let searchFunctionDown=false;
 const searchWork=createCoordinator<string,GeoLocation[]>((query)=>query.toLowerCase(),async(items,signal)=>{
-  const data=await fetchRequest<{locations:GeoLocation[]}>({action:'search',query:items[0]},signal);return [data.locations.filter(validLocation)];
+  const query=items[0]!;
+  const data=searchFunctionDown?await publicSearch(query,signal):await fetchRequest<{locations:GeoLocation[]}>({action:'search',query},signal).catch((error)=>{
+    if(signal?.aborted||(error instanceof TravelError&&error.kind!=='unavailable'))throw error;
+    searchFunctionDown=true;
+    return publicSearch(query,signal);
+  });
+  return [data.locations.filter(validLocation)];
 },1);
 export async function searchLocations(query: string, signal?: AbortSignal): Promise<GeoLocation[]> {
   return searchWork(query.trim(),signal);
