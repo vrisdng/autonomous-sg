@@ -202,9 +202,9 @@ export function SplitScreen({ go }: { go: (tab: Tab) => void }) {
       const status = paymentState(person.id);
       return `${person.name || 'Unnamed'}: S$${formatCents(totals.perPersonCents[person.id] ?? 0)} · ${status === 'received' ? 'received' : status === 'sent' ? 'sent, awaiting host' : 'unpaid'}`;
     });
-    const message = `Bojio? bill · Total S$${formatCents(totals.totalCents)}\n${lines.join('\n')}`;
+    const message = `Apple67 bill · Total S$${formatCents(totals.totalCents)}\n${lines.join('\n')}`;
     if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) await navigator.clipboard.writeText(message);
-    else await Share.share({ title: 'Bojio? bill split', message });
+    else await Share.share({ title: 'Apple67 bill split', message });
     setShared(true); setTimeout(() => setShared(false), 1800);
     } catch { setBillSyncError('Could not copy or share the bill. Please retry; your bill is still saved.'); }
   };

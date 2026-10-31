@@ -24,6 +24,6 @@ describe('plan links', () => {
 
   it('builds a pasteable invite from the existing share link', () => {
     vi.stubEnv('EXPO_PUBLIC_APP_URL', 'https://bojio.pages.dev/');
-    expect(createPlanInviteMessage('abc234')).toBe('Bojio? Join our supper party: https://bojio.pages.dev/plan/ABC234\nCode: ABC234');
+    expect(createPlanInviteMessage('abc234')).toBe('Apple67 · Join our supper party: https://bojio.pages.dev/plan/ABC234\nCode: ABC234');
   });
 });

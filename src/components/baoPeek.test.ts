@@ -27,7 +27,7 @@ import {
   setBaoDragBlocking,
   tabHasInlineBao,
   writePeekChoice,
-} from './baoPeek';
+} from './baoPeekLogic';
 
 const column = { width: 390, height: 700 };
 

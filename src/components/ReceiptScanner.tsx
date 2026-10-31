@@ -41,7 +41,7 @@ export function ReceiptScanner({existing,onClose,onImport}:Props){
  {warnings.map(w=><Text key={w} style={{color:colors.muted}}>{w}</Text>)}
  <Disclosure title="AI extracted item lines"><Text selectable>{review.raw}</Text></Disclosure>
  <Button label="Add reviewed items" onPress={valid?()=>{if(submitted.current)return;submitted.current=true;if(!onImport(items,adjustments,charged,review.paymentLabel??'')){submitted.current=false;setError('Bill or access changed. Close this scanner and reopen it from the current bill.');}}:undefined}/>
- <Text style={{fontSize:12}}>Adds unclaimed items, not a replacement bill. Only confirmed items are saved; Bojio discards photos and extracted text when you close. AI uploads are subject to Google’s data policies.</Text></>:null}
+ <Text style={{fontSize:12}}>Adds unclaimed items, not a replacement bill. Only confirmed items are saved; Apple67 discards photos and extracted text when you close. AI uploads are subject to Google’s data policies.</Text></>:null}
  <Pressable accessibilityRole="button" accessibilityLabel="Back to bill · paste or type instead" onPress={onClose} style={({pressed})=>({padding:18,borderRadius:18,borderWidth:1,borderColor:colors.line,backgroundColor:pressed?colors.lime:colors.bambooSoft,flexDirection:'row',alignItems:'center',gap:12,marginTop:8})}><Text style={{fontSize:24,color:colors.muted}}>✎</Text><View style={{flex:1}}><Text style={{fontSize:15,fontWeight:'700',color:colors.ink}}>Paste or type instead</Text><Text style={{fontSize:12,color:colors.muted,marginTop:3}}>Back to your bill — no photo needed</Text></View><Text style={{fontSize:22,color:colors.muted}}>›</Text></Pressable>
  </ScrollView></View></Modal>;
 }

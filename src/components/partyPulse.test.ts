@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPartyPulse, type PulseDeck } from './partyPulse';
+import { buildPartyPulse, type PulseDeck } from './partyPulseLogic';
 import { PlanDraft } from '../types';
 
 const deck: PulseDeck = {

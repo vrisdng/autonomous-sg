@@ -32,7 +32,7 @@ describe('copyPlainText', () => {
     const area = installDocument(exec);
     const writeText = vi.fn(async () => undefined);
     vi.stubGlobal('navigator', { vendor: 'Apple Computer, Inc.', clipboard: { writeText } });
-    const message = 'Bojio? Join our supper party: https://bojio.pages.dev/plan/ABC234\nCode: ABC234';
+    const message = 'Apple67 · Join our supper party: https://bojio.pages.dev/plan/ABC234\nCode: ABC234';
     await expect(copyPlainText(message)).resolves.toBe(true);
     expect(area.value).toBe(message);
     expect(exec).toHaveBeenCalledWith('copy');
@@ -43,7 +43,7 @@ describe('copyPlainText', () => {
     installDocument(() => false);
     const writeText = vi.fn(async () => undefined);
     vi.stubGlobal('navigator', { vendor: 'Google Inc.', clipboard: { writeText } });
-    const message = 'Bojio? Join our supper party: https://bojio.pages.dev/plan/ABC234\nCode: ABC234';
+    const message = 'Apple67 · Join our supper party: https://bojio.pages.dev/plan/ABC234\nCode: ABC234';
     await expect(copyPlainText(message)).resolves.toBe(true);
     expect(writeText).toHaveBeenCalledWith(message);
   });

@@ -4,5 +4,5 @@
     "strict": true,
     "noUncheckedIndexedAccess": true
   },
-  "exclude": ["supabase/functions", "scripts", "e2e"]
+  "exclude": ["supabase/functions", "scripts", "e2e", "dist", "web-build"]
 }

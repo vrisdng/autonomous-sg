@@ -1,8 +1,8 @@
-# Bojio?
+# Apple67
 
 **Supper plans, settled.** A Singapore-first group utility combining fair halfway meeting spots, one-link bill splitting, and last-train planning.
 
-The current repository is an interactive Expo app with five connected tabs:
+The web demo opens on a scrollable discovery homepage (`#discover`). Its buttons lead into the existing outing app, which has five connected tabs:
 
 - Home — the fast entry point for a spontaneous supper plan
 - Meet — participant origins and ranked late-night venue suggestions
@@ -22,6 +22,8 @@ npm start
 ```
 
 Scan the QR code with Expo Go. You can also run `npm run web` for a browser preview.
+
+For the web demo, open `http://localhost:8081/#discover` after `npm run web`. Use **Plan & swipe with friends** (or tap a post) to open the existing party flow. Create a party, share its invite, then continue to Meet to swipe the shared restaurant shortlist. **Browse solo** opens the local Meet draft. The twelve discovery stories and photos are illustrative; shared plans, group votes, invitations, bills and journeys use Apple67's existing flows.
 
 Run `npm test` for the calculation and plan-link regression suite, and `npm run typecheck` for the strict TypeScript check.
 

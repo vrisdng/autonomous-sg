@@ -4,7 +4,7 @@ import { useSwipes } from '../hooks/useSwipes';
 import { useOuting } from '../hooks/useOuting';
 import { PlanDraft } from '../types';
 import { BAO_INK, BAO_STEAMER } from './baoArt';
-import { buildPartyPulse, pulseDeckFromSwipes, type PartyPulseModel, type PulsePhase } from './partyPulse';
+import { buildPartyPulse, pulseDeckFromSwipes, type PartyPulseModel, type PulsePhase } from './partyPulseLogic';
 import { colors } from '../theme';
 
 /** Collapsed row under Ask me anything. Expands to the party roster and any swipe progress we actually have. */

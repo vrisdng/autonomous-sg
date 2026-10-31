@@ -126,7 +126,7 @@ export function TrainScreen({ go }: { go: (tab: Tab) => void }) {
   };
   const share = async () => {
     if (!origin) return;
-    const text = [`Bojio? Leaving-now journeys from ${origin.label}`, deadline ? `Leave-by: ${clock(deadline)}` : 'No complete future leave-by is available.',
+    const text = [`Apple67 leaving-now journeys from ${origin.label}`, deadline ? `Leave-by: ${clock(deadline)}` : 'No complete future leave-by is available.',
       ...people.map((person) => { const route = results.find((result) => result.id === person.id)?.route; return `${person.name}: ${route ? `${clock(route.startAt)} – ${clock(route.endAt)} · ${Math.ceil(route.durationSeconds / 60)} min` : 'No scheduled journey returned'}`; }),
       'Scheduled journeys, not confirmed last services.'].join('\n');
     try { if (Platform.OS === 'web' && navigator.clipboard) { await navigator.clipboard.writeText(text); setMessage('Journey summary copied.'); } else await Share.share({ message: text }); }

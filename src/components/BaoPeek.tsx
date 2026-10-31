@@ -24,7 +24,7 @@ import {
   type PeekChoice,
   type PeekLayout,
   type PeekSide,
-} from './baoPeek';
+} from './baoPeekLogic';
 
 const nativeDriver = Platform.OS !== 'web';
 const swayEase = Easing.inOut(Easing.sin);

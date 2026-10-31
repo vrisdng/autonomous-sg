@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { BAO_CREAM, BAO_INK, BAO_STEAMER } from './baoArt';
-import { baoAskPanel, type AskTail } from './baoPeek';
+import { baoAskPanel, type AskTail } from './baoPeekLogic';
 import { colors } from '../theme';
 import { PartyPulse } from './PartyPulse';
 import { SoftCross } from './Ui';

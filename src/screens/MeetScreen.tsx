@@ -61,7 +61,7 @@ export function MeetScreen({ go, onOpenParty }: { go: (tab: Tab) => void; onOpen
   const voting = useVenueVotes(plan);
   const googleRevision=useSyncExternalStore(subscribePlaces,placesRevision);
   const [pickedArea,setPickedArea]=useState<{code:string;center?:GeoLocation}>({code:''});
-  const [shortlist,setShortlist]=useState(false);
+  const [shortlist,setShortlist]=useState(true);
   const [otherHours,setOtherHours]=useState(false);
   const [optionsOpen,setOptionsOpen]=useState(()=>Platform.OS==='web'&&typeof window!=='undefined'&&window.history.state?.bojioSheet==='outing');
   const openSheet=()=>{
@@ -95,7 +95,7 @@ export function MeetScreen({ go, onOpenParty }: { go: (tab: Tab) => void; onOpen
   const searchCenter=manualCenter??groupCenter.center;
   const found=discovery(plan?.code??'');
   const areaReady=!plan||pickedArea.code===plan.code;
-  useEffect(()=>{if(areaReady && plan && plan.remote?.role!=='guest' && searchCenter && !found.attempted){const timer=setTimeout(()=>void discover(plan.code,searchCenter),600);return()=>clearTimeout(timer);}},[areaReady,plan?.code,plan?.remote?.role,centerKey(searchCenter),found.attempted]);
+  useEffect(()=>{if(!shortlist && areaReady && plan && plan.remote?.role!=='guest' && searchCenter && !found.attempted){const timer=setTimeout(()=>void discover(plan.code,searchCenter),600);return()=>clearTimeout(timer);}},[shortlist,areaReady,plan?.code,plan?.remote?.role,centerKey(searchCenter),found.attempted]);
   const liveCandidates=searchPlaces(plan?.code??'');
   useEffect(()=>{
     setCandidates((current)=>{
@@ -294,13 +294,13 @@ export function MeetScreen({ go, onOpenParty }: { go: (tab: Tab) => void; onOpen
   </View>;
   return <View style={styles.wrap}>
     <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}>
-      <View style={{flex:1}}><Text style={{fontSize:11,letterSpacing:1.5,fontWeight:'800',color:colors.muted,marginBottom:6}}>PICK LAH</Text><Text style={[styles.title,{fontSize:32,letterSpacing:-1}]}>Where we makan?</Text><Text style={{fontSize:14,color:colors.muted,marginTop:5}}>Left is no. Right is yes.</Text></View>
+      <View style={{flex:1}}><Text style={{fontSize:11,letterSpacing:1.5,fontWeight:'800',color:colors.muted,marginBottom:6}}>PICK LAH</Text><Text style={[styles.title,{fontSize:32,letterSpacing:-1}]}>Where we makan?</Text><Text style={{fontSize:14,color:colors.muted,marginTop:5}}>Explore places, swipe up, and save your picks.</Text></View>
       <Pressable accessibilityRole="button" accessibilityLabel="Edit search criteria and outing" onPress={openSheet} style={{width:48,height:48,borderRadius:24,backgroundColor:colors.card,alignItems:'center',justifyContent:'center',borderWidth:1,borderColor:colors.line}}><Text style={{fontSize:28,fontWeight:'900'}}>···</Text></Pressable>
     </View>
     <HomeLocationEditor key={'home:'+plan.code+plan.remote?.participantId} plan={plan}/>
-    {found.busy?<Text accessibilityLiveRegion="polite" style={styles.copy}>Finding restaurants… Your cards will appear here.</Text>:null}
-    {found.attempted&&!found.busy&&!found.error&&!liveCandidates.length?<Text accessibilityRole="alert">No restaurants returned for this search. Previous cards are kept; choose another area in ···.</Text>:null}
-    {found.error?<Card><Text accessibilityRole="alert">{found.error}</Text><Button label="Search options & retry" onPress={openSheet}/></Card>:null}
+    {!shortlist&&found.busy?<Text accessibilityLiveRegion="polite" style={styles.copy}>Finding restaurants… Your cards will appear here.</Text>:null}
+    {!shortlist&&found.attempted&&!found.busy&&!found.error&&!liveCandidates.length?<Text accessibilityRole="alert">No restaurants returned for this search. Previous cards are kept; choose another area in ···.</Text>:null}
+    {!shortlist&&found.error?<Card><Text accessibilityRole="alert">{found.error}</Text><Button label="Search options & retry" onPress={openSheet}/></Card>:null}
     {message||outing.error?<Text accessibilityRole="alert" style={styles.message}>{message||outing.error}</Text>:null}
     {venueNotice?<Text accessibilityLiveRegion="polite" style={styles.message}>{venueNotice}</Text>:null}
     <SwipeDeck key={plan.code} plan={plan} rankingOpen={rankingOpen} onOpenRanking={()=>setRankingOpen(true)} onCloseRanking={()=>setRankingOpen(false)} batch={found.batch} mode={found.mode} searchBusy={found.busy} onMore={!guest&&searchCenter?()=>void discover(plan.code,searchCenter,found.radius,'append'):undefined} candidates={shortlist?candidates.filter(p=>p.source!=='google_places'):liveCandidates} onChoose={chooseVenue} onActive={setDeckActive}/>

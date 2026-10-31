@@ -3,7 +3,7 @@ import { Animated, Easing, Platform, Pressable, StyleSheet, Text, View } from 'r
 import Svg, { Path } from 'react-native-svg';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { colors, shadow } from '../theme';
-import { likeShare, rankMetal, readLiveTop3, subscribeLiveTop3, type LiveRankRow } from './liveTop3';
+import { likeShare, rankMetal, readLiveTop3, subscribeLiveTop3, type LiveRankRow } from './liveTop3Store';
 
 const nativeDriver = Platform.OS !== 'web';
 const ROW = 32;

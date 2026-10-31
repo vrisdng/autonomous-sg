@@ -1,8 +1,10 @@
 import { readFile, readdir } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
-const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const key = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+const localEnv = await readFile('.env.local', 'utf8').catch(() => '');
+const localValue = (name) => localEnv.split(/\r?\n/).find(line => line.startsWith(`${name}=`))?.slice(name.length + 1).trim();
+const url = process.env.EXPO_PUBLIC_SUPABASE_URL || localValue('EXPO_PUBLIC_SUPABASE_URL');
+const key = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || localValue('EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY') || localValue('EXPO_PUBLIC_SUPABASE_ANON_KEY');
 assert.ok(url && key, 'Production builds require public Supabase settings');
 const directory = 'dist/_expo/static/js/web';
 const files = (await readdir(directory)).filter(file => file.endsWith('.js'));

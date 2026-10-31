@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RANK_METALS, likeShare, rankMetal } from './liveTop3';
+import { RANK_METALS, likeShare, rankMetal } from './liveTop3Store';
 
 describe('live top 3 bars', () => {
   it('grows with likes and shrinks when a like is no longer a share of the group', () => {

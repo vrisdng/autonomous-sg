@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { BaoAskPanel } from '../components/BaoAsk';
-import { baoAskPanel } from '../components/baoPeek';
+import { baoAskPanel } from '../components/baoPeekLogic';
 import { Button, Card, Pill } from '../components/Ui';
 import { loadPlanDraft } from '../data/planDraft';
 import { colors } from '../theme';
