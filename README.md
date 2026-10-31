@@ -1,22 +1,34 @@
+<div align="center">
+
 # Apple67
 
-**Stop screenshotting plans. Start making them.**
+### Stop screenshotting plans. Start making them.
 
-Apple67 turns a place you discover into a night out with your friends: create a party, swipe to decide, share the ride, split the bill and get home.
+Turn a place you found into a night out: **create a party, swipe to decide, share the ride, split the bill, get home.**
+
+[![Live demo](https://img.shields.io/badge/live%20demo-autonomous--sg.vercel.app-FFE900?style=for-the-badge&labelColor=111111)](https://autonomous-sg.vercel.app)
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+![Expo](https://img.shields.io/badge/Expo-54-000020?logo=expo&logoColor=white)
+![React Native Web](https://img.shields.io/badge/React%20Native%20Web-0.81-61DAFB?logo=react&logoColor=black)
+![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20Edge-3ECF8E?logo=supabase&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-deployed-000000?logo=vercel&logoColor=white)
 
 **Discover together. Decide together. Go together.**
 
 Free to use · MIT licensed · Singapore-first
 
-[Source code](https://github.com/vrisdng/autonomous-sg) · [Public pilot](https://bojio.pages.dev) · [Known limits](#7-known-limits)
+[Live demo](https://autonomous-sg.vercel.app) · [Quick start](#quick-start) · [How it works](#how-a-night-out-works) · [Architecture](#architecture) · [Business model](#the-business-opportunity-help-interest-become-action) · [Known limits](#7-known-limits)
 
-<p align="center">
-  <img src="docs/readme/discover.jpg" alt="Apple67 discovery feed with a prompt to turn the scroll into a supper plan" height="380">
-  <img src="docs/readme/party.jpg" alt="Party screen with the Bao mascot and buttons to create or join a party" height="380">
-  <img src="docs/readme/split.jpg" alt="Split screen with a Scan receipt button" height="380">
-</p>
+<br>
 
-<p align="center"><sub>Current build at phone width. Feed posts are labelled demo content; photos from Unsplash.</sub></p>
+<img src="docs/readme/01-feed.webp" alt="For You feed" width="190"> <img src="docs/readme/06-swipe-deck.webp" alt="Swipe deck" width="190"> <img src="docs/readme/07-top3.webp" alt="Live Top 3" width="190"> <img src="docs/readme/11-split-claim.webp" alt="Split the bill" width="190">
+
+<sub>Real screenshots of the [live demo](https://autonomous-sg.vercel.app) at phone size. Feed posts are labelled demo content; photos from Unsplash.</sub>
+
+</div>
+
+---
 
 ## Great places deserve more than a screenshot
 
@@ -32,7 +44,66 @@ For friends, that means more admin before a simple meal. For a restaurant, it me
 
 Apple67 keeps the outing together, from the first “jio?” to the last person heading home.
 
-## One party. Three reasons the plan actually happens.
+## What it does
+
+| | Step | What happens |
+|---|---|---|
+| 🎉 | **Party** | Start a party with a name. Share a link or code. Friends join with no account. |
+| 👆 | **Makan Swipe** | Everyone swipes the same restaurant deck. Likes become a live Top 3. The host confirms. |
+| 🚗 | **Same Way, Can Share?** | Riders going the same way are grouped, drop-offs are ordered, and the fare is split. |
+| ⏱️ | **Last Call** | One group leave-by countdown before the last trains. |
+| 🧾 | **SplitLink** | Scan the receipt. Friends claim their dishes. Service charge and GST are shared out to the cent. |
+
+## See it in action
+
+Screenshots taken from the live demo with a throwaway party.
+
+| **1 · For You feed** | **2 · Bao menu** | **3 · Create a party** | **4 · Invite** |
+|---|---|---|---|
+| <img src="docs/readme/01-feed.webp" alt="Apple67 For You feed with food posts and a Jio with Bao button" width="200"> | <img src="docs/readme/02-bao-menu.webp" alt="Bao menu with Makan Swipe, Same Way Can Share and SplitLink" width="200"> | <img src="docs/readme/03-create-party.webp" alt="Create a new party screen asking for a name" width="200"> | <img src="docs/readme/04-invite.webp" alt="Invite screen showing a party code and a copy link button" width="200"> |
+| Scroll ideas, then tap **Jio with Bao** to turn one into a plan. | One menu for the whole night: swipe, ride, split. | Just a name. No account, no sign-up. | Share a link or six-letter code. Friends pick their name. |
+
+| **5 · Meet** | **6 · Swipe to pick** | **7 · Live Top 3** | **8 · Last Call** |
+|---|---|---|---|
+| <img src="docs/readme/05-meet.webp" alt="Meet screen showing home address and the first restaurant card" width="200"> | <img src="docs/readme/06-swipe-deck.webp" alt="Restaurant card with Pass, Okay and Like buttons" width="200"> | <img src="docs/readme/07-top3.webp" alt="Group favourites Top 3 with gold and silver medals" width="200"> | <img src="docs/readme/08-last-call.webp" alt="Last Call screen with a group leave-by countdown" width="200"> |
+| Set your home, then open the shared restaurant deck. | Pass, Okay or Like on real Google Places venues, with photos and ratings. | Most hearts wins. The host confirms the meetup. | One leave-by countdown for the group. |
+
+| **9 · Share ride** | **10 · Split: confirm total** | **11 · Split: claim dishes** |
+|---|---|---|
+| <img src="docs/readme/09-share-ride.webp" alt="Share ride screen asking where the car starts" width="200"> | <img src="docs/readme/10-split-confirm.webp" alt="Split screen confirming the total paid with subtotal, service and GST" width="200"> | <img src="docs/readme/11-split-claim.webp" alt="Split screen showing your share of the bill" width="200"> |
+| Set a pickup. Riders going the same way are grouped and drop-offs ordered. | Host confirms the total paid, with service charge and GST. | Everyone claims what they ate. Shares add up to the cent. |
+
+<sub>Last Call needs a start point and route data. In the screenshot it is taken in the afternoon, so the countdown reads overdue. The Share ride result needs two people with home addresses, so only the setup screen is shown.</sub>
+
+## How a night out works
+
+```mermaid
+flowchart TB
+  subgraph PLAN["1 · Plan"]
+    direction LR
+    A["Scroll the feed"] --> B["Jio with Bao<br/>create a party"]
+    B --> C["Share link or code"]
+    C --> D["Friends join<br/>no account"]
+  end
+  subgraph DECIDE["2 · Decide"]
+    direction LR
+    E["Everyone swipes<br/>the same deck"] --> F["Live Top 3<br/>most hearts wins"]
+    F --> G{"Host confirms<br/>the venue"}
+  end
+  subgraph EAT["3 · Eat"]
+    direction LR
+    H["Scan the receipt"] --> I["Host confirms<br/>the total paid"]
+    I --> J["Friends claim dishes<br/>and mark paid"]
+  end
+  subgraph HOME["4 · Get home"]
+    direction LR
+    K["Last Call<br/>group leave-by time"] --> L["Share ride<br/>match riders, order drop-offs"]
+    L --> M["Hand off to Grab,<br/>Gojek or Google Maps"]
+  end
+  PLAN --> DECIDE --> EAT --> HOME
+```
+
+## One party, three jobs
 
 ### 1. Makan Swipe — turn “anything lah” into a decision
 
@@ -59,6 +130,120 @@ Photograph the receipt. Review the extracted items. Friends open the party link 
 **Built today:** receipt scanning, collaborative item claims and manual payment-status confirmation, without requiring guests to create accounts. Actual payments happen outside Apple67.
 
 **The whole evening stays connected:** the people who chose the venue are already there when it is time to share a ride or settle the bill.
+
+## Architecture
+
+```mermaid
+flowchart TB
+  subgraph Client["Browser / phone"]
+    App["Expo app (React Native Web)<br/>App.tsx, src/screens, src/features"]
+  end
+  Vercel["Vercel<br/>static web build"] -->|serves| App
+  subgraph Supabase["Supabase"]
+    DB[("Postgres<br/>row-level security<br/>capability-checked RPCs")]
+    RT["Realtime<br/>plan:code invalidation events"]
+    subgraph Fns["Edge Functions"]
+      FP["google-places"]
+      FV["venue-search"]
+      FT["google-transit"]
+      FR["transit-routes"]
+      FD["drive-routes"]
+      FO["onemap"]
+      FL["lta"]
+      FA["receipt-ai"]
+    end
+  end
+  App -->|"RPC: parties, bills, claims, swipes"| DB
+  DB --> RT
+  RT -.->|"refresh signal<br/>15 s polling fallback"| App
+  App -->|"public project key"| Fns
+  FP --> GP["Google Places"]
+  FV --> GP
+  FT --> GR["Google Routes"]
+  FR --> GR
+  FD --> GR
+  FO --> OM["OneMap SG"]
+  FL --> LTA["LTA DataMall"]
+  FA --> GM["Gemini"]
+  App -.->|"deep links"| Rides["Grab, Gojek, Google Maps"]
+```
+
+Provider keys live in Edge Function secrets, so none reach the app bundle. Guests never touch tables directly: every read and write goes through a database function that checks a capability token (see [`supabase/README.md`](supabase/README.md)).
+
+## Tech stack
+
+| Layer | Choice |
+|---|---|
+| App | [Expo](https://expo.dev) 54, React 19, React Native 0.81, React Native Web, TypeScript |
+| Hosting | Vercel (static `dist` export; see [`vercel.json`](vercel.json)) |
+| Database and realtime | Supabase Postgres with row-level security, 30 migrations, Realtime |
+| Backend logic | Supabase Edge Functions (Deno) |
+| Data providers | Google Places and Routes, OneMap, LTA DataMall |
+| Receipt scanning | Google Gemini, called only from the `receipt-ai` function |
+| Tests | Vitest unit tests, Playwright verification scripts in [`scripts/`](scripts) |
+
+## Quick start
+
+Requires Node.js 22+. Expo Go is optional, for running on a phone.
+
+```bash
+npm install
+npm run web    # then open http://localhost:8081/#discover
+npm start      # or scan the QR code with Expo Go
+npm test       # unit tests
+npm run typecheck
+```
+
+For the web demo, open `http://localhost:8081/#discover` after `npm run web`. The feed posts and profile/activity are illustrative; Search filters posts, post details can be liked locally, and Create previews a post without publishing it. Tap **Jio with Bao** to open its drop-down. With no party the only option is **Create party**, which leads to the invite page: copy the link, or tap + on a sample friend to add them to the roster. Go back and tap Bao again for **Makan Swipe**, **Same Way, Can Share?** (the Grab handoff) and **SplitLink**. You can also tap **Jio friends with Bao** on a post to start a party whose invite leads with that post. Posts are illustrative, so they do not filter the restaurant shortlist. Shared plans, group votes, bills and journeys use the existing Bojio flows.
+
+### Connect a backend
+
+The feed and local drafts work without any setup. Shared parties, restaurant search, scanning and routing need cloud services.
+
+1. Create a Supabase project and run [`supabase/demo-setup.sql`](supabase/demo-setup.sql) once in the SQL Editor of the new, empty project.
+2. Copy `.env.example` to `.env.local`, add the project URL and publishable key, then restart Expo. Never put a service-role key in the app.
+3. Deploy the Edge Functions you need and set their secrets in Supabase.
+
+| Variable | Where | Purpose |
+|---|---|---|
+| `EXPO_PUBLIC_SUPABASE_URL` | `.env.local` | Supabase project URL |
+| `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `.env.local` | Public client key (`EXPO_PUBLIC_SUPABASE_ANON_KEY` is the legacy fallback) |
+| `EXPO_PUBLIC_SUPABASE_FUNCTIONS_URL` and `_KEY` | `.env.local` | Optional. Edge Functions on a different project. Set both or neither |
+| `EXPO_PUBLIC_APP_URL` | `.env.local` | Public web origin used in share links |
+
+| Function | Secret | Used for |
+|---|---|---|
+| `google-places` | `GOOGLE_PLACES_API_KEY` | Restaurants, details and photos |
+| `google-transit` | `GOOGLE_ROUTES_API_KEY` | Public transport routes |
+| `venue-search`, `transit-routes`, `drive-routes` | `GOOGLE_MAPS_API_KEY` | Venue text search, transit and driving routes |
+| `onemap` | `ONEMAP_EMAIL`, `ONEMAP_PASSWORD` | Address search, driving and fallback transit |
+| `lta` | `LTA_DATAMALL_ACCOUNT_KEY` | Last services and bus arrivals |
+| `receipt-ai` | `GEMINI_API_KEY` | Receipt scanning |
+
+See [`supabase/README.md`](supabase/README.md) for the security model and [`docs/FREE-SERVICE-SETUP.md`](docs/FREE-SERVICE-SETUP.md) for a free-tier walkthrough. Server-side variables for local development go in `.env.server` (see [`.env.server.example`](.env.server.example)); never commit it.
+
+## Deploy
+
+The web app is a static export, hosted on Vercel.
+
+1. Import the repository in Vercel. [`vercel.json`](vercel.json) sets the build command (`npm run build:vercel`) and output directory (`dist`).
+2. Set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in the Vercel project. Add `SUPABASE_FUNCTIONS_URL` and `SUPABASE_FUNCTIONS_KEY` if the functions live on a separate project. The build maps these to the `EXPO_PUBLIC_` variables.
+3. Deploy. Locally, `npm run build:web` produces the same `dist` folder.
+
+## Project structure
+
+```text
+App.tsx              App shell and navigation
+src/screens/         One file per core flow
+src/components/      Shared UI, swipe deck, receipt scanner
+src/features/        Pure logic for meeting, splitting, rides, trains
+src/data/            Local drafts, Supabase and provider adapters
+supabase/            Database setup, migrations and Edge Functions
+scripts/             Verification and dev scripts
+docs/                Product notes, verification records, README images
+```
+
+Older docs and the package name still use the working name, Bojio.
 
 ## The business opportunity: help interest become action
 
@@ -95,6 +280,20 @@ The competition asks: **“What did you uncover, and how do you know it works?�
 | Open source licensing | 15% | MIT license, public repo, full database setup in one file | [8](#8-open-source) |
 
 Savings apply to the workflow we replace. Delivery subscriptions, restaurant deals and ride fares remain separate expenses. [Known limits](#7-known-limits) make the current scope explicit.
+
+## Contributing
+
+Keep each change small enough to test. Run `npm run typecheck` and `npm test` before opening a pull request, and check the changed flow on a narrow phone viewport. Replace mock claims with live data only when the source and timestamp are visible. Update [`docs/PRODUCT.md`](docs/PRODUCT.md) when product scope changes. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to write a good prompt for AI-assisted changes.
+
+## License
+
+[MIT](LICENSE). See [Open source](#8-open-source) for what the license covers.
+
+---
+
+## Submission evidence
+
+The sections below are the project's evidence for the Autonomous SG 2026 rubric. The numbers in the rubric table link here.
 
 ## 1. The old thing: the group eat-out stack
 
@@ -284,7 +483,7 @@ The scan ceiling comes from the code. The function caps output at 4,096 tokens, 
 - **Limited device testing.** Most checks ran in phone-sized browsers rather than on physical phones.
 - **Time saved isn't measured.** We have no number yet for how long a group spends deciding.
 - **The hosted version depends on free tiers.** Google and Gemini calls are metered, so the demo may be rate-limited or paused.
-- **The public pilot is behind this repository.** [bojio.pages.dev](https://bojio.pages.dev) serves an earlier build under the working name Bojio, without the discovery feed. Run it locally for the current version.
+- **The older public pilot is behind this repository.** [bojio.pages.dev](https://bojio.pages.dev) serves an earlier build under the working name Bojio, without the discovery feed. The [live demo](https://autonomous-sg.vercel.app) serves the current build.
 - **Market figures have limits.** Many are third-party estimates or several years old, and creator rates are agency estimates. Section 2 rates the usage figures, and Splitwise's regional pricing may differ.
 
 ## 8. Open source
@@ -296,48 +495,7 @@ The scan ceiling comes from the code. The function caps output at 4,096 tokens, 
 
 The MIT license covers our code. Google, OneMap and LTA data stay under their own terms, and self-hosters need their own keys. Feed photos come from Unsplash.
 
-## 9. Run it
-
-Requires Node.js 22+. Expo Go is optional, for running on a phone.
-
-```bash
-npm install
-npm run web    # then open http://localhost:8081/#discover
-npm start      # or scan the QR code with Expo Go
-npm test       # unit tests
-```
-
-For the web demo, open `http://localhost:8081/#discover` after `npm run web`. The feed posts and profile/activity are illustrative; Search filters posts, post details can be liked locally, and Create previews a post without publishing it. Tap **Jio with Bao** to open its drop-down. With no party the only option is **Create party**, which leads to the invite page: copy the link, or tap + on a sample friend to add them to the roster. Go back and tap Bao again for **Makan Swipe**, **Same Way, Can Share?** (the Grab handoff) and **SplitLink**. You can also tap **Jio friends with Bao** on a post to start a party whose invite leads with that post. Posts are illustrative, so they do not filter the restaurant shortlist. Shared plans, group votes, bills and journeys use the existing Bojio flows.
-
-The feed and local drafts work without any setup. Shared parties, restaurant search, scanning and routing need cloud services:
-
-1. Create a Supabase project and run `supabase/demo-setup.sql` once in the SQL Editor of the new, empty project.
-2. Copy `.env.example` to `.env.local`, add the project URL and publishable key, then restart Expo. Never put a service-role key in the app.
-3. Deploy the Edge Functions you need and set their secrets in Supabase:
-
-| Function | Secret | Used for |
-|---|---|---|
-| `google-places` | `GOOGLE_PLACES_API_KEY` | Restaurants |
-| `google-transit` | `GOOGLE_ROUTES_API_KEY` | Public transport routes |
-| `onemap` | `ONEMAP_EMAIL`, `ONEMAP_PASSWORD` | Address search, driving and fallback transit |
-| `lta` | `LTA_DATAMALL_ACCOUNT_KEY` | Last services and bus arrivals |
-| `receipt-ai` | `GEMINI_API_KEY` | Receipt scanning |
-
-See [`supabase/README.md`](supabase/README.md) for the security model and [`docs/FREE-SERVICE-SETUP.md`](docs/FREE-SERVICE-SETUP.md) for a free-tier walkthrough.
-
-```text
-App.tsx              App shell and navigation
-src/screens/         One file per core flow
-src/components/      Shared UI, swipe deck, receipt scanner
-src/features/        Pure logic for meeting, splitting, rides, trains
-src/data/            Local drafts, Supabase and provider adapters
-supabase/            Database setup and Edge Functions
-docs/                Product notes and verification records
-```
-
-Older docs and the package name still use the working name, Bojio.
-
-## 10. Sources
+## 9. Sources
 
 Source register retained from the submission, originally marked checked 31 October 2026 unless a date is shown. This editorial revision reconfirmed Splitwise Pro feature availability, not every external statistic or price. Prices can vary by region.
 
