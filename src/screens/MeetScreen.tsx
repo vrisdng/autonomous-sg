@@ -294,7 +294,7 @@ export function MeetScreen({ go, onOpenParty, fromPost }: { go: (tab: Tab) => vo
   </View>;
   return <View style={styles.wrap}>
     <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}>
-      <View style={{flex:1}}><Text style={{fontSize:11,letterSpacing:1.5,fontWeight:'800',color:colors.muted,marginBottom:6}}>PICK LAH</Text><Text style={[styles.title,{fontSize:32,letterSpacing:-1}]}>Where we makan?</Text><Text style={{fontSize:14,color:colors.muted,marginTop:5}}>Explore places, swipe up, and save your picks.</Text></View>
+      <View style={{flex:1}}><Text style={{fontSize:11,letterSpacing:1.5,fontWeight:'800',color:colors.muted,marginBottom:6}}>PICK LAH</Text><Text style={[styles.title,{fontSize:32,letterSpacing:-1}]}>Where we makan?</Text><Text style={{fontSize:14,color:colors.muted,marginTop:5}}>Left is no. Right is yes.</Text></View>
       <Pressable accessibilityRole="button" accessibilityLabel="Edit search criteria and outing" onPress={openSheet} style={{width:48,height:48,borderRadius:24,backgroundColor:colors.card,alignItems:'center',justifyContent:'center',borderWidth:1,borderColor:colors.line}}><Text style={{fontSize:28,fontWeight:'900'}}>···</Text></Pressable>
     </View>
     <HomeLocationEditor key={'home:'+plan.code+plan.remote?.participantId} plan={plan}/>

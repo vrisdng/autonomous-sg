@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Image, Linking, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { retainLastCall } from './src/features/train/lastCallSession';
 import { PartyAccess } from './src/components/PartyAccess';
-import { BaoFeatureMenu, BaoLauncher, FeedPartyStrip } from './src/components/BaoFeatureMenu';
+import { BaoFeatureMenu, FeedPartyStrip } from './src/components/BaoFeatureMenu';
 import { BaoPeek } from './src/components/BaoPeek';
 import { peekSideFromSearch, tabHasInlineBao } from './src/components/baoPeekLogic';
 import { BottomNav } from './src/components/BottomNav';
@@ -54,6 +54,7 @@ export default function App() {
     }
   };
   const openDiscover = () => openFeed('home');
+  const openBaoMenu = (center: { x: number; y: number }) => { setBaoAnchor(center); setBaoOpen(true); };
   // Feature navigation stays inside one popup. Only invite links use URLs.
   const openBojio = (next: Tab) => {
     setBaoOpen(false);
@@ -129,13 +130,17 @@ export default function App() {
       <View style={styles.brand}><Text style={styles.logo}>Apple67</Text></View>
       <View style={styles.feedHeader}><Text style={styles.feedTitle}>{feedView === 'home' ? 'For You' : feedView === 'search' ? 'Search' : feedView === 'activity' ? 'Activity' : 'Profile'}</Text></View>
       {feedView === 'home' ? <FeedPartyStrip onOpen={() => openBojio('meet')} /> : null}
-      <ScrollView ref={feedScroll} style={styles.feedScroll} contentContainerStyle={styles.feedContent} keyboardShouldPersistTaps="handled">
-        <DiscoveryScreen view={feedView as Exclude<FeedView, 'compose'>} selected={openPost} onSelect={setOpenPost} onJio={jioFromPost} onTripHome={tripHomeFromPost} />
-      </ScrollView>
+      <View style={styles.feedStage}>
+        <ScrollView ref={feedScroll} style={styles.feedScroll} contentContainerStyle={styles.feedContent} keyboardShouldPersistTaps="handled">
+          <DiscoveryScreen view={feedView as Exclude<FeedView, 'compose'>} selected={openPost} onSelect={setOpenPost} onJio={jioFromPost} onTripHome={tripHomeFromPost} />
+        </ScrollView>
+        {/* Edge-peek Bao on the feed. A tap opens the Bao menu; the popup draws its own Bao. */}
+        {!composing && !bojioOpen && !partyOpen && !incomingPlanCode ? <BaoPeek side={peekSideFromSearch()} onTap={openBaoMenu} /> : null}
+      </View>
       <DiscoveryNav active={feedView} onChange={openFeed} />
     </>
     {/* Compose covers the feed instead of replacing it, so likes and saves survive. */}
-    {composing ? <View style={styles.compose}><CreatePostScreen onClose={openDiscover} /></View> : <BaoLauncher onPress={center => { setBaoAnchor(center); setBaoOpen(true); }} />}
+    {composing ? <View style={styles.compose}><CreatePostScreen onClose={openDiscover} /></View> : null}
 
     {bojioOpen ? <View style={styles.popup} accessibilityViewIsModal>
       <Pressable accessibilityRole="button" accessibilityLabel="Close Bojio" onPress={closeBojio} style={styles.scrim} />
@@ -150,9 +155,9 @@ export default function App() {
             {screen ? <ScreenTransition key={entryVersion + ':' + tab}>{screen}</ScreenTransition> : null}
           </ScrollView>
           <LiveTop3Dock />
-          {!partyOpen && !incomingPlanCode && !tabHasInlineBao(tab) ? <BaoPeek key={entryVersion + ':' + tab} side={peekSideFromSearch()} /> : null}
+          {!partyOpen && !incomingPlanCode && !tabHasInlineBao(tab) ? <BaoPeek key={entryVersion + ':' + tab} side={peekSideFromSearch()} onTap={tab === 'meet' ? openBaoMenu : undefined} /> : null}
         </View>
-        <BottomNav active={tab} onChange={openBojio} />
+        {tab !== 'meet' ? <BottomNav active={tab} onChange={openBojio} /> : null}
       </View>
     </View> : null}
 
@@ -173,6 +178,7 @@ const styles = StyleSheet.create({
   logo: { backgroundColor: '#FFE900', color: '#111111', fontSize: 16, fontWeight: '900', fontStyle: 'italic', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 99, overflow: 'hidden' },
   feedHeader: { width: '100%', maxWidth: 720, alignSelf: 'center', height: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderBottomWidth: 1, borderBottomColor: '#E8E8E8', paddingHorizontal: 12 },
   feedTitle: { color: '#111111', fontSize: 18, fontWeight: '900' },
+  feedStage: { flex: 1, position: 'relative', overflow: 'hidden' },
   feedScroll: { flex: 1 }, feedContent: { width: '100%', maxWidth: 720, alignSelf: 'center', paddingHorizontal: 10, paddingTop: 5, paddingBottom: 32 },
   popup: { ...StyleSheet.absoluteFillObject, zIndex: 80, alignItems: 'center', justifyContent: 'center', elevation: 10 },
   scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: '#00000099' },

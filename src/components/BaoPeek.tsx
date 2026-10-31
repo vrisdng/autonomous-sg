@@ -37,9 +37,10 @@ let parkedColumn = { width: 0, height: 0 };
 
 /**
  * Bao looks in from a screen edge when a tab opens.
- * Parked, only a small face handle takes presses. A tap opens a question bubble; a drag follows the pointer to another edge.
+ * Parked, only a small face handle takes presses. A tap opens a question bubble, or calls `onTap` with the tap point
+ * when the host screen opens its own menu; a drag follows the pointer to another edge.
  */
-export function BaoPeek({ side: forced }: { side?: PeekSide }) {
+export function BaoPeek({ side: forced, onTap }: { side?: PeekSide; onTap?: (point: { x: number; y: number }) => void }) {
   const [choice, setChoice] = useState<PeekChoice>(() => initialPeekChoice(forced));
   const [skipIntro, setSkipIntro] = useState(false);
   const [asking, setAsking] = useState(false);
@@ -117,7 +118,12 @@ export function BaoPeek({ side: forced }: { side?: PeekSide }) {
             columnRef={columnRef}
             columnBox={columnBox}
             onDrop={dropAt}
-            onAsk={() => {
+            tapLabel={onTap ? 'Jio with Bao, or drag Bao to another edge' : undefined}
+            onAsk={(point) => {
+              if (onTap) {
+                onTap(point);
+                return;
+              }
               setAskExtra(0);
               setAsking((open) => !open);
             }}
@@ -150,15 +156,16 @@ function capturePointer(event: GestureResponderEvent) {
   }
 }
 
-function PeekSprite({ layout, reduced, instant, asking, columnRef, columnBox, onDrop, onAsk, onDragStart, onHold }: {
+function PeekSprite({ layout, reduced, instant, asking, tapLabel, columnRef, columnBox, onDrop, onAsk, onDragStart, onHold }: {
   layout: PeekLayout;
   reduced: boolean;
   instant: boolean;
   asking: boolean;
+  tapLabel?: string;
   columnRef: RefObject<View | null>;
   columnBox: MutableRefObject<ColumnBox>;
   onDrop: (point: { x: number; y: number }, box: ColumnBox) => void;
-  onAsk: () => void;
+  onAsk: (point: { x: number; y: number }) => void;
   onDragStart: () => void;
   onHold: (held: boolean) => void;
 }) {
@@ -224,7 +231,7 @@ function PeekSprite({ layout, reduced, instant, asking, columnRef, columnBox, on
         setBaoDragBlocking(false);
         onHoldRef.current(false);
         if (!dragged) {
-          onAskRef.current();
+          onAskRef.current({ x: pointer.current.pageX, y: pointer.current.pageY });
           return;
         }
         const box = columnBox.current;
@@ -307,7 +314,7 @@ function PeekSprite({ layout, reduced, instant, asking, columnRef, columnBox, on
         testID="bao-peek-grab"
         pointerEvents="auto"
         accessibilityRole="button"
-        accessibilityLabel={asking ? 'Close ask Bao' : 'Ask Bao, or drag Bao to another edge'}
+        accessibilityLabel={asking ? 'Close ask Bao' : tapLabel ?? 'Ask Bao, or drag Bao to another edge'}
         {...gesture.panHandlers}
         style={styles.grab}
       />
