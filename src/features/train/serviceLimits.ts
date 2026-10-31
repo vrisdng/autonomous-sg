@@ -1,3 +1,4 @@
+import { functionsConfig } from '../../data/functionsConfig';
 import { RouteStep } from '../travel/types';
 export type ServiceLimit={index:number;status:'available'|'unavailable';lastAt?:string;arrivalAt?:string;direction?:string;reason?:string;basis?:string};
 export type ServiceLimits={checkedAt:string;serviceDay:string;limits:ServiceLimit[];alerts:{status:'disruption'|'normal-or-minor-delays'|'unknown'};notice:string;live?:{index:number;status:string;at?:string;connectionRisk?:boolean}[]};
@@ -26,7 +27,7 @@ export function fetchServiceLimits(steps:RouteStep[]):Promise<ServiceLimits>{
  const transits=transitSteps(steps);
  const legs=transits.map(({mode,from,to,boardingStopCode,alightingStopCode,serviceNo,boardingLocation,alightingLocation,startAt,endAt},index)=>({mode,from,to,boardingStopCode,alightingStopCode,serviceNo,boardingLocation,alightingLocation,startAt,endAt,transferSeconds:transits[index+1]?steps.slice(steps.indexOf(transits[index]!)+1,steps.indexOf(transits[index+1]!)).reduce((sum,s)=>sum+s.durationSeconds,0):0}));
  const identity=JSON.stringify(legs),existing=pending.get(identity);if(existing)return existing;
- const request=(async()=>{const url=process.env.EXPO_PUBLIC_SUPABASE_URL,key=process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;if(!url||!key)throw new Error('Schedule service is not configured.');
+ const request=(async()=>{const {url,key}=functionsConfig();if(!url||!key)throw new Error('Schedule service is not configured.');
  const response=await fetch(url+'/functions/v1/lta',{method:'POST',headers:{apikey:key,'Content-Type':'application/json'},body:JSON.stringify({action:'service-limits',legs}),signal:AbortSignal.timeout(65000)});const data=await response.json();
  if(!response.ok||!Array.isArray(data.limits))throw new Error(data.error||'Schedule check failed.');return data as ServiceLimits;
  })().finally(()=>pending.delete(identity));pending.set(identity,request);return request;

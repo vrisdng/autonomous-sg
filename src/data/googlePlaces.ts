@@ -1,5 +1,6 @@
 import { GeoLocation, Place } from '../types';
 import { parseGooglePlace } from '../features/meet/googlePlace';
+import { functionsConfig } from './functionsConfig';
 
 // Active-session display state only. Never put this map into persistent storage.
 const places = new Map<string, Place>();
@@ -15,8 +16,7 @@ export const placesRevision=()=>revision;
 export const resolvedPlace=(place?:Place)=>place?.source==='google_places' ? places.get(place.providerPlaceId!)??place : place;
 export const placeFailure=(id:string)=>failures.get(id);
 export async function requestGoogle(body: object) {
-  const url=process.env.EXPO_PUBLIC_SUPABASE_URL?.replace(/\/$/,'');
-  const key=process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+  const {url,key}=functionsConfig();
   if(!url||!key)throw new Error('Restaurant discovery is not configured.');
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),22000);
   try {const response=await fetch(`${url}/functions/v1/google-places`,{method:'POST',headers:{apikey:key,'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal});const data=await response.json();if(!response.ok)throw new Error(data.error||'Restaurant service unavailable. Retry.');return data;}

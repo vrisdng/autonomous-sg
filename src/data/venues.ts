@@ -11,6 +11,18 @@ function venue(id: string, name: string, address: string, area: string, latitude
     nearestStation: '', point: { x: longitude, y: latitude }, tags: [],
     source: 'verified', sourceTimestamp: checked, openUntil: 'Check opening hours with the venue' };
 }
+// Google place IDs for card photos, matched by name and address. Nearby search only
+// finds some branches, so the others borrow their chain's photos and say so on the card.
+const chainPhotos: Record<string, { placeId: string; venueId: string }> = {
+  swee: { placeId: 'ChIJv1DkBMgZ2jERft-n2ibNvh0', venueId: 'swee-jalan-besar' },
+  azhar: { placeId: 'ChIJFykj1mEQ2jER50T02kGd1OY', venueId: 'azhar-bt' },
+  prata: { placeId: 'ChIJoeKclo8a2jER_iLZQ6bBc5c', venueId: 'prata-clementi' },
+  casuarina: { placeId: 'ChIJ8zToos4W2jERxon2YtEMhAM', venueId: 'casuarina' },
+};
+export function venuePhotoSource(id: string) {
+  const chain = chainPhotos[id.split('-')[0]!];
+  return chain ? { placeId: chain.placeId, sameBranch: chain.venueId === id } : undefined;
+}
 export const verifiedVenues: Place[] = [
   venue('swee-jalan-besar', 'Swee Choon · Jalan Besar', '183–193 Jalan Besar, Singapore 208882', 'Jalan Besar', 1.308215131922868, 103.8569068435072, swee, 'Dim sum. Operator lists late-night service; check today’s last order on its website.'),
   venue('swee-amk', 'Swee Choon · AMK Hub', '53 Ang Mo Kio Avenue 3, #01-42, Singapore 569933', 'Ang Mo Kio', 1.369389226903445, 103.8484779659393, swee, 'Express dim sum with limited seating. Published hours differ between pages; confirm before travelling.'),

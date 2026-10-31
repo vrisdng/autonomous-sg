@@ -1,10 +1,11 @@
 import { validateAiReceipt } from '../../../supabase/functions/_shared/receiptAi';
+import { functionsConfig } from '../../data/functionsConfig';
 import { ReceiptReview } from './receiptReview';
 import { parseCents } from './calculateBill';
 export function scanAiReceipt(image:string){
  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),35000);
  const result=(async():Promise<ReceiptReview>=>{
-  const url=process.env.EXPO_PUBLIC_SUPABASE_URL,key=process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY||process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+  const {url,key}=functionsConfig();
   if(!url||!key)throw new Error('AI scanner is not configured.');
   try{
    const response=await fetch(url.replace(/\/$/,'')+'/functions/v1/receipt-ai',{method:'POST',headers:{apikey:key,'Content-Type':'application/json'},body:JSON.stringify({image,consent:true}),signal:controller.signal});

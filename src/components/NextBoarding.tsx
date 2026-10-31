@@ -1,6 +1,7 @@
 import { useEffect,useRef,useState } from 'react';
 import { Text,View } from 'react-native';
 import { Button } from './Ui';
+import { functionsConfig } from '../data/functionsConfig';
 import { colors } from '../theme';
 import { clock,RouteStep } from '../features/travel/types';
 
@@ -11,7 +12,7 @@ const recent=new Map<string,{at:number;result:Result}>();
 async function arrivals(stopCode:string|undefined,service:string,stopLocation?:RouteStep['boardingLocation']):Promise<Result>{
  const id=JSON.stringify([stopCode,service,stopLocation]),cached=recent.get(id);if(cached&&Date.now()-cached.at<20000)return cached.result;
  const existing=pending.get(id);if(existing)return existing;
- const request=(async()=>{const url=process.env.EXPO_PUBLIC_SUPABASE_URL,key=process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY||process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+ const request=(async()=>{const {url,key}=functionsConfig();
   if(!url||!key)throw new Error('Live arrivals are not configured.');
   const response=await fetch(url+'/functions/v1/lta',{method:'POST',headers:{apikey:key,'Content-Type':'application/json'},body:JSON.stringify({action:'bus-arrivals',stopCode,service,stopLocation}),signal:AbortSignal.timeout(18000)});
   const data=await response.json();if(!response.ok||!Array.isArray(data.services))throw new Error(data.error||'Live arrivals unavailable.');

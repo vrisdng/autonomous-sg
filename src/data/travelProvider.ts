@@ -3,9 +3,9 @@ import { DriveLeg, RouteResult, TripRequest, validLocation } from '../features/t
 import { createCoordinator } from '../features/travel/coordinator';
 import { shortlistRidePairs } from '../features/rides/shortlist';
 import { searchPayload } from '../../supabase/functions/_shared/onemapPayload';
+import { functionsConfig } from './functionsConfig';
 
-const url = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim().replace(/\/$/, '');
-const key = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim();
+const { url, key } = functionsConfig();
 const localUrl = __DEV__ ? process.env.EXPO_PUBLIC_TRAVEL_API_URL?.trim() : undefined;
 export const travelConfigured = () => Boolean(localUrl || (url && key));
 

@@ -1,17 +1,23 @@
-import { useEffect,useRef,useState } from 'react';
+import { useEffect,useRef,useState,useSyncExternalStore } from 'react';
 import { Image,Linking,Modal,PanResponder,ScrollView,Text,View } from 'react-native';
 import { Place } from '../types';
 import { Button, CloseButton } from './Ui';
-import { requestGoogle } from '../data/googlePlaces';
+import { ensurePlace,placeFailure,placesRevision,requestGoogle,resolvedPlace,subscribePlaces } from '../data/googlePlaces';
+import { venuePhotoSource } from '../data/venues';
 import { venueMapsUrl } from '../features/meet/discovery';
+import { googleReference } from '../features/meet/googlePlace';
 import { colors } from '../theme';
 const photos=new Map<string,Promise<string>>();
 const photo=(name:string)=>{let p=photos.get(name);if(!p){p=requestGoogle({action:'photo',name}).then(r=>r.photoUri as string).catch(e=>{photos.delete(name);throw e;});photos.set(name,p);}return p;};
 export function RestaurantPhoto({place,index=0,height=230}:{place:Place;index?:number;height?:number}){
- const selected=place.photos?.[index];const [uri,setUri]=useState(''),[error,setError]=useState('');
+ useSyncExternalStore(subscribePlaces,placesRevision);
+ const source=place.photos?.length?undefined:venuePhotoSource(place.id);
+ const shown=source?resolvedPlace(googleReference({source:'google_places',providerPlaceId:source.placeId})):place;
+ const selected=shown?.photos?.[index];const [uri,setUri]=useState(''),[error,setError]=useState('');
+ useEffect(()=>{if(source)void ensurePlace(source.placeId);},[source?.placeId]);
  useEffect(()=>{let active=true;setUri('');setError('');if(selected)void photo(selected.name).then(url=>{if(active)setUri(url);}).catch(e=>{if(active)setError(e.message);});return()=>{active=false;};},[selected?.name]);
- return <View>{uri?<Image accessibilityLabel={`Restaurant photo ${index+1}`} source={{uri}} resizeMode="cover" style={{width:'100%',height,borderRadius:18}} onError={()=>{setUri('');setError('Photo unavailable. Open Google Maps below.');}}/>:<View style={{height,borderRadius:18,backgroundColor:colors.bambooSoft,alignItems:'center',justifyContent:'center',padding:20}}><Text style={{fontSize:34}}>🍽️</Text><Text>{error||(selected?'Loading photo…':'No Google photo available')}</Text></View>}
- <Text style={{fontSize:12,color:colors.muted,marginTop:6}}>Google Maps</Text>{selected?.authorAttributions?.map((a,i)=><Text key={i} style={{fontSize:12,color:colors.muted}} onPress={a.uri&&/^(https:)?\/\//.test(a.uri)?()=>void Linking.openURL(a.uri!.startsWith('//')?'https:'+a.uri:a.uri!):undefined}>Photo: {a.displayName}</Text>)}</View>;
+ return <View>{uri?<Image accessibilityLabel={`Restaurant photo ${index+1}`} source={{uri}} resizeMode="cover" style={{width:'100%',height,borderRadius:18}} onError={()=>{setUri('');setError('Photo unavailable. Open Google Maps below.');}}/>:<View style={{height,borderRadius:18,backgroundColor:colors.bambooSoft,alignItems:'center',justifyContent:'center',padding:20}}><Text style={{fontSize:34}}>🍽️</Text><Text>{error||(selected||(source&&!placeFailure(source.placeId))?'Loading photo…':'No Google photo available')}</Text></View>}
+ <Text style={{fontSize:12,color:colors.muted,marginTop:6}}>Google Maps{uri&&source&&!source.sameBranch?' · Photo from another branch':''}</Text>{selected?.authorAttributions?.map((a,i)=><Text key={i} style={{fontSize:12,color:colors.muted}} onPress={a.uri&&/^(https:)?\/\//.test(a.uri)?()=>void Linking.openURL(a.uri!.startsWith('//')?'https:'+a.uri:a.uri!):undefined}>Photo: {a.displayName}</Text>)}</View>;
 }
 export function RestaurantDetails({place,onClose,mention}:{place?:Place;onClose:()=>void;mention?:{active:boolean;disabled:boolean;busy:boolean;error:string;onPress:()=>void}}){
  const [index,setIndex]=useState(0),[reviews,setReviews]=useState<any[]|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
