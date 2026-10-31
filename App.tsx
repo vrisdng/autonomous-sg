@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Image, Linking, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { retainLastCall } from './src/features/train/lastCallSession';
 import { PartyAccess } from './src/components/PartyAccess';
+import { DropNotice, DropNoticeState, PostDragGhost, usePostDrag } from './src/components/PostDrag';
 import { BaoFeatureMenu, FeedPartyStrip } from './src/components/BaoFeatureMenu';
 import { BaoPeek } from './src/components/BaoPeek';
 import { peekSideFromSearch, tabHasInlineBao } from './src/components/baoPeekLogic';
@@ -17,8 +18,13 @@ import { RideScreen } from './src/screens/RideScreen';
 import { SplitScreen } from './src/screens/SplitScreen';
 import { TrainScreen } from './src/screens/TrainScreen';
 import { colors } from './src/theme';
+import { loadPlanDraft } from './src/data/planDraft';
+import { verifiedVenues } from './src/data/venues';
+import { variedVenues } from './src/features/meet/discovery';
+import { activeParty } from './src/features/plans/friends';
 import { getPlanCodeFromUrl } from './src/features/plans/links';
-import { Tab } from './src/types';
+import { addToDeck } from './src/hooks/useSwipes';
+import { PlanDraft, Tab } from './src/types';
 
 const knownTabs: Tab[] = ['home', 'meet', 'split', 'ride', 'train'];
 const tabFromUrl = (): Tab => {
@@ -40,6 +46,8 @@ export default function App() {
   const [partyOpen, setPartyOpen] = useState(() => typeof window !== 'undefined' && !!getPlanCodeFromUrl(window.location.href));
   const [partyStart, setPartyStart] = useState<'create' | 'invite'>();
   const [entryVersion, setEntryVersion] = useState(0);
+  const [dropNotice, setDropNotice] = useState<DropNoticeState>();
+  const baoCenter = useRef<{ x: number; y: number } | undefined>(undefined);
   const feedScroll = useRef<ScrollView>(null);
   const popupScroll = useRef<ScrollView>(null);
 
@@ -74,6 +82,32 @@ export default function App() {
   const jioFromPost = (post: Post) => { setOpenPost(undefined); setJioPost(post); openParty(); };
   const tripHomeFromPost = (post: Post) => { setOpenPost(undefined); setJioPost(post); openBojio('train'); };
   const backToPost = () => { closeBojio(); setOpenPost(jioPost); };
+  const addToParty = async (post: Post, party: PlanDraft) => {
+    const name = post.place!.name;
+    setDropNotice({ text: `Adding ${name}…` });
+    try {
+      const added = await addToDeck(party, post.place!, variedVenues(verifiedVenues));
+      setDropNotice({ text: added ? `Added ${name} to the swipe` : `${name} is already in the swipe`, view: true });
+    } catch (error) {
+      setDropNotice({ text: error instanceof Error ? error.message : 'Could not add it. Retry when connected.' });
+    }
+  };
+  const addToSwipe = async (post: Post) => {
+    setOpenPost(undefined);
+    if (!post.place) { setDropNotice({ text: 'This post has no restaurant to add.' }); return; }
+    const party = activeParty(await loadPlanDraft());
+    // No party yet: make one first. Entering it adds this post.
+    if (party) await addToParty(post, party); else jioFromPost(post);
+  };
+  const drag = usePostDrag(baoCenter, post => void addToSwipe(post));
+  const partyEntered = async () => {
+    closeParty();
+    const party = activeParty(await loadPlanDraft());
+    // Before Meet opens, so the deck it loads already has this card.
+    if (jioPost?.place && party) await addToParty(jioPost, party);
+    setEntryVersion(version => version + 1);
+    openBojio('meet');
+  };
   const closeParty = () => {
     setIncomingPlanCode(undefined);
     setPartyOpen(false);
@@ -131,16 +165,17 @@ export default function App() {
       <View style={styles.feedHeader}><Text style={styles.feedTitle}>{feedView === 'home' ? 'For You' : feedView === 'search' ? 'Search' : feedView === 'activity' ? 'Activity' : 'Profile'}</Text></View>
       {feedView === 'home' ? <FeedPartyStrip onOpen={() => openBojio('meet')} /> : null}
       <View style={styles.feedStage}>
-        <ScrollView ref={feedScroll} style={styles.feedScroll} contentContainerStyle={styles.feedContent} keyboardShouldPersistTaps="handled">
-          <DiscoveryScreen view={feedView as Exclude<FeedView, 'compose'>} selected={openPost} onSelect={setOpenPost} onJio={jioFromPost} onTripHome={tripHomeFromPost} />
+        <ScrollView ref={feedScroll} scrollEnabled={!drag.post} style={styles.feedScroll} contentContainerStyle={styles.feedContent} keyboardShouldPersistTaps="handled">
+          <DiscoveryScreen view={feedView as Exclude<FeedView, 'compose'>} selected={openPost} drag={drag.controls} onSelect={setOpenPost} onJio={jioFromPost} onAddToSwipe={post => void addToSwipe(post)} onTripHome={tripHomeFromPost} />
         </ScrollView>
-        {/* Edge-peek Bao on the feed. A tap opens the Bao menu; the popup draws its own Bao. */}
-        {!composing && !bojioOpen && !partyOpen && !incomingPlanCode ? <BaoPeek side={peekSideFromSearch()} onTap={openBaoMenu} /> : null}
+        {/* Edge-peek Bao on the feed. A tap opens the Bao menu; a dragged post dropped on Bao joins the swipe. */}
+        {!composing && !bojioOpen && !partyOpen && !incomingPlanCode ? <BaoPeek side={peekSideFromSearch()} onTap={openBaoMenu} dropTargetRef={baoCenter} dropping={!!drag.post} over={drag.over} /> : null}
       </View>
       <DiscoveryNav active={feedView} onChange={openFeed} />
     </>
     {/* Compose covers the feed instead of replacing it, so likes and saves survive. */}
     {composing ? <View style={styles.compose}><CreatePostScreen onClose={openDiscover} /></View> : null}
+    <PostDragGhost post={drag.post} point={drag.point} />
 
     {bojioOpen ? <View style={styles.popup} accessibilityViewIsModal>
       <Pressable accessibilityRole="button" accessibilityLabel="Close Bojio" onPress={closeBojio} style={styles.scrim} />
@@ -162,11 +197,8 @@ export default function App() {
     </View> : null}
 
     <BaoFeatureMenu visible={baoOpen} anchor={baoAnchor} onClose={() => setBaoOpen(false)} onNavigate={openBojio} onCreateParty={() => { setJioPost(undefined); openParty(undefined, 'create'); }} onInvite={() => { setJioPost(undefined); openParty(undefined, 'invite'); }} />
-    {partyOpen || incomingPlanCode ? <PartyAccess key={incomingPlanCode ?? 'party'} code={incomingPlanCode} start={partyStart} fromPost={jioPost?.title} onClose={cancelParty} onEntered={() => {
-      closeParty();
-      setEntryVersion(version => version + 1);
-      openBojio('meet');
-    }} /> : null}
+    {partyOpen || incomingPlanCode ? <PartyAccess key={incomingPlanCode ?? 'party'} code={incomingPlanCode} start={partyStart} fromPost={jioPost?.title} onClose={cancelParty} onEntered={() => void partyEntered()} /> : null}
+    <DropNotice notice={dropNotice} onDone={() => setDropNotice(undefined)} onView={() => { setDropNotice(undefined); openBojio('meet'); }} />
   </SafeAreaView>;
 }
 

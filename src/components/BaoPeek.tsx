@@ -29,6 +29,7 @@ import {
 const nativeDriver = Platform.OS !== 'web';
 const swayEase = Easing.inOut(Easing.sin);
 const grabSize = 44;
+const dropRingSize = 84;
 
 type ColumnBox = { x: number; y: number; width: number; height: number };
 
@@ -40,7 +41,14 @@ let parkedColumn = { width: 0, height: 0 };
  * Parked, only a small face handle takes presses. A tap opens a question bubble, or calls `onTap` with the tap point
  * when the host screen opens its own menu; a drag follows the pointer to another edge.
  */
-export function BaoPeek({ side: forced, onTap }: { side?: PeekSide; onTap?: (point: { x: number; y: number }) => void }) {
+export function BaoPeek({ side: forced, onTap, dropTargetRef, dropping, over }: {
+  side?: PeekSide;
+  onTap?: (point: { x: number; y: number }) => void;
+  /** Gets Bao's face in page coordinates, so a post dragged from the feed can be dropped on Bao. */
+  dropTargetRef?: MutableRefObject<{ x: number; y: number } | undefined>;
+  dropping?: boolean;
+  over?: boolean;
+}) {
   const [choice, setChoice] = useState<PeekChoice>(() => initialPeekChoice(forced));
   const [skipIntro, setSkipIntro] = useState(false);
   const [asking, setAsking] = useState(false);
@@ -51,6 +59,14 @@ export function BaoPeek({ side: forced, onTap }: { side?: PeekSide; onTap?: (poi
   const columnRef = useRef<View>(null);
   const columnBox = useRef<ColumnBox>({ x: 0, y: 0, width: parkedColumn.width, height: parkedColumn.height });
   const layout = useMemo(() => resolvePeekLayout(choice, column), [choice, column]);
+  const faceLocal = layout && column.width > 2 && column.height > 2 ? projectPeekPoint(layout, column, baoPeekMarks.face, 'settle') : undefined;
+  const publishTarget = () => {
+    if (!dropTargetRef) return;
+    const box = columnBox.current;
+    dropTargetRef.current = faceLocal && box.width > 1 ? { x: box.x + faceLocal.x, y: box.y + faceLocal.y } : undefined;
+  };
+  publishTarget();
+  useEffect(() => () => { if (dropTargetRef) dropTargetRef.current = undefined; }, [dropTargetRef]);
 
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return () => clearBaoDragBlocking();
@@ -104,6 +120,7 @@ export function BaoPeek({ side: forced, onTap }: { side?: PeekSide; onTap?: (poi
           setColumn((current) => current.width === width && current.height === height ? current : { width, height });
           columnRef.current?.measureInWindow((x, y, measuredWidth, measuredHeight) => {
             columnBox.current = { x, y, width: measuredWidth || width, height: measuredHeight || height };
+            publishTarget();
           });
         }}
         style={styles.column}
@@ -131,6 +148,7 @@ export function BaoPeek({ side: forced, onTap }: { side?: PeekSide; onTap?: (poi
             onHold={setHolding}
           />
         ) : null}
+        {dropping && faceLocal ? <View pointerEvents="none" testID="bao-drop-ring" style={[styles.dropRing, over && styles.dropRingOver, { left: faceLocal.x - dropRingSize / 2, top: faceLocal.y - dropRingSize / 2 }]} /> : null}
         {asking && askPlace ? (
           <View pointerEvents="box-none" style={[styles.ask, { left: askPlace.left, top: askPlace.top - askShift }]}>
             <BaoAskPanel tail={askPlace.tail} onExtra={setAskExtra} onClose={closeAsk} />
@@ -380,6 +398,8 @@ const styles = StyleSheet.create({
     zIndex: 2,
     ...(Platform.OS === 'web' ? { touchAction: 'none' } as object : {}),
   },
+  dropRing: { position: 'absolute', width: dropRingSize, height: dropRingSize, borderRadius: dropRingSize / 2, borderWidth: 3, borderStyle: 'dashed', borderColor: '#E5D94A', backgroundColor: 'rgba(255,233,0,0.18)', zIndex: 3 },
+  dropRingOver: { borderStyle: 'solid', borderColor: '#FFE900', backgroundColor: 'rgba(255,233,0,0.45)', transform: [{ scale: 1.25 }] },
   eye: { position: 'absolute', backgroundColor: BAO_INK },
   steam: {
     position: 'absolute',
