@@ -16,3 +16,5 @@ web-build/
 npm-debug.log*
 public/ocr/
 docs/hackathon-docs
+.vercel
+.env*
