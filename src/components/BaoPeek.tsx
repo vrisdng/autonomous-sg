@@ -1,9 +1,10 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MutableRefObject, type RefObject } from 'react';
 import { Animated, Easing, GestureResponderEvent, PanResponder, PanResponderGestureState, Platform, Pressable, StyleSheet, View } from 'react-native';
-import Svg, { Ellipse, Path, Rect } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { BaoAskPanel } from './BaoAsk';
-import { BAO_BODY, BAO_CHEEK, BAO_CREAM, BAO_INK, BAO_PLEATS, BAO_STEAMER } from './baoArt';
+import { BAO_INK } from './baoArt';
+import { BaoApple } from './BaoApple';
 import {
   alongForDrop,
   askShiftForGrowth,
@@ -302,7 +303,7 @@ function PeekSprite({ layout, reduced, instant, asking, columnRef, columnBox, on
         },
       ]}
     >
-      <SteamerBaoMark blink={blink} />
+      <AppleBaoMark blink={blink} />
       <View
         testID="bao-peek-grab"
         pointerEvents="auto"
@@ -315,7 +316,7 @@ function PeekSprite({ layout, reduced, instant, asking, columnRef, columnBox, on
   );
 }
 
-function SteamerBaoMark({ blink }: { blink: Animated.Value }) {
+function AppleBaoMark({ blink }: { blink: Animated.Value }) {
   const { width, height } = baoPeekArt;
   const sx = width / 120;
   const sy = height / 140;
@@ -323,19 +324,11 @@ function SteamerBaoMark({ blink }: { blink: Animated.Value }) {
   return (
     <View pointerEvents="none" importantForAccessibility="no-hide-descendants" style={{ width, height }}>
       <Svg pointerEvents="none" width={width} height={height} viewBox="0 0 120 140">
-        <Path d={BAO_BODY} fill={BAO_CREAM} />
-        <Ellipse cx={32} cy={76} rx={11} ry={7} fill={BAO_CHEEK} />
-        <Ellipse cx={84} cy={76} rx={11} ry={7} fill={BAO_CHEEK} />
-        <Path d={BAO_BODY} fill="none" stroke={BAO_INK} strokeWidth={4.5} strokeLinejoin="round" strokeLinecap="round" />
-        <Path d={BAO_PLEATS} fill="none" stroke={BAO_INK} strokeWidth={2.6} strokeLinecap="round" />
+        <BaoApple />
         <Path d="M52 80 Q58 86 64 80" fill="none" stroke={BAO_INK} strokeWidth={2.4} strokeLinecap="round" />
-        <Rect x={16} y={106} width={88} height={20} rx={6} fill={BAO_STEAMER} stroke={BAO_INK} strokeWidth={3} />
-        <Path d="M28 116 H92" stroke={BAO_INK} strokeWidth={2.4} strokeLinecap="round" />
       </Svg>
       <Animated.View pointerEvents="none" style={[styles.eye, { width: eye, height: eye, borderRadius: eye, left: 43 * sx, top: 64 * sy, transform: [{ scaleY: blink }] }]} />
       <Animated.View pointerEvents="none" style={[styles.eye, { width: eye, height: eye, borderRadius: eye, left: 67 * sx, top: 64 * sy, transform: [{ scaleY: blink }] }]} />
-      <View pointerEvents="none" style={[styles.steam, styles.steamLeft]} />
-      <View pointerEvents="none" style={[styles.steam, styles.steamRight]} />
     </View>
   );
 }
@@ -374,15 +367,4 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' ? { touchAction: 'none' } as object : {}),
   },
   eye: { position: 'absolute', backgroundColor: BAO_INK },
-  steam: {
-    position: 'absolute',
-    top: 0,
-    width: 6,
-    height: 10,
-    borderLeftWidth: 2,
-    borderColor: BAO_CREAM,
-    borderRadius: 8,
-  },
-  steamLeft: { left: 22, opacity: 0.9, transform: [{ rotate: '16deg' }] },
-  steamRight: { right: 22, opacity: 0.9, transform: [{ rotate: '-16deg' }] },
 });
