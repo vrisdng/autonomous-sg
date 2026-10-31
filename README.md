@@ -2,7 +2,7 @@
 
 **Supper plans, settled.** A Singapore-first group utility combining fair halfway meeting spots, one-link bill splitting, and last-train planning.
 
-The web demo opens on a scrollable discovery homepage (`#discover`). Its buttons lead into the existing outing app, which has five connected tabs:
+The web demo opens on a scrollable Lemon8-style discovery homepage (`#discover`). Its bottom Home, Search, Create, Activity and Profile controls stay within the illustrative feed. Tap Bao in the header to open the existing outing features:
 
 - Home — the fast entry point for a spontaneous supper plan
 - Meet — participant origins and ranked late-night venue suggestions
@@ -23,7 +23,7 @@ npm start
 
 Scan the QR code with Expo Go. You can also run `npm run web` for a browser preview.
 
-For the web demo, open `http://localhost:8081/#discover` after `npm run web`. Use **Plan & swipe with friends** (or tap a post) to open the existing party flow. Create a party, share its invite, then continue to Meet to swipe the shared restaurant shortlist. **Browse solo** opens the local Meet draft. The twelve discovery stories and photos are illustrative; shared plans, group votes, invitations, bills and journeys use Apple67's existing flows.
+For the web demo, open `http://localhost:8081/#discover` after `npm run web`. The twelve posts and feed profile/activity are illustrative; Search filters posts, post details can be liked locally, and Create previews a post without publishing it. Tap **Jio with Bao** to open the Bojio feature menu, or tap **Jio friends with Bao** on a post to start a party whose invite leads with that post. Posts are illustrative, so they do not filter the restaurant shortlist. From there, create a party, share its invite and continue to Meet to swipe the shared restaurant shortlist. Shared plans, group votes, bills and journeys use the existing Bojio flows.
 
 Run `npm test` for the calculation and plan-link regression suite, and `npm run typecheck` for the strict TypeScript check.
 

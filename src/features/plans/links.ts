@@ -36,7 +36,8 @@ export function createPlanShareUrl(code: string) {
 }
 
 /** Ready-to-paste chat message. The link comes from the existing share URL. */
-export function createPlanInviteMessage(code: string) {
+export function createPlanInviteMessage(code: string, fromPost?: string) {
   const normalized = normalizePlanCode(code);
-  return `Apple67 · Join our supper party: ${createPlanShareUrl(normalized)}\nCode: ${normalized}`;
+  const invite = `Join our supper party: ${createPlanShareUrl(normalized)}\nCode: ${normalized}`;
+  return fromPost ? `Apple67 · Saw this and thought of you: ${fromPost}\n${invite}` : `Apple67 · ${invite}`;
 }

@@ -16,7 +16,7 @@ import { PlanDraft } from '../types';
 import { colors } from '../theme';
 
 const newToken=()=>Crypto.randomUUID().replace(/-/g,'')+Crypto.randomUUID().replace(/-/g,'');
-export function PartyAccess({code,onClose,onEntered}:{code?:string;onClose:()=>void;onEntered:()=>void}) {
+export function PartyAccess({code,fromPost,onClose,onEntered}:{code?:string;fromPost?:string;onClose:()=>void;onEntered:()=>void}) {
  const [party,setParty]=useState<PlanDraft>();
  const [current,setCurrent]=useState<PlanDraft|null>();
  const [name,setName]=useState(''),[input,setInput]=useState(code??'');
@@ -113,7 +113,7 @@ export function PartyAccess({code,onClose,onEntered}:{code?:string;onClose:()=>v
  const shared=current?.remote?.published&&history.some(item=>item.code===current.code)?current:undefined;
  const inviting=sharing&&!!shared;
  const url=shared?createPlanShareUrl(shared.code):'';
- const invite=shared?createPlanInviteMessage(shared.code):'';
+ const invite=shared?createPlanInviteMessage(shared.code,fromPost):'';
  const remembered=!!party&&(party.remote?.role==='host'&&!!party.remote.hostToken||!!party.remote?.participantId&&party.participants.some(p=>p.id===party.remote?.participantId));
  const known=remembered&&!chooseAnother;
  const startNew=()=>{setCreating(true);setParty(undefined);setName('');setError('');setJustCreated(false);creation.current=undefined;};
@@ -137,6 +137,7 @@ export function PartyAccess({code,onClose,onEntered}:{code?:string;onClose:()=>v
   <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.page}>
    {!party&&!creating&&!inviting?<View style={{flexDirection:'row',alignItems:'center',backgroundColor:colors.lime,borderRadius:28,padding:18,overflow:'hidden',gap:4}}><View style={{flex:1,minWidth:0,gap:10}}><Text style={{fontSize:10,letterSpacing:1.5,fontWeight:'800',color:colors.green}}>APPLE67 · JIO LAH.</Text><Text style={{fontSize:28,lineHeight:32,letterSpacing:-1,fontWeight:'900',color:colors.ink}}>You eating{`\n`}or just watching?</Text><Text style={s.note}>One link. The whole table.</Text></View><SupperKaki/></View>:null}
    <View style={s.heading}><Text style={s.title}>{creating?'Create a new party':known?'Continue or start fresh?':party?'Who’s joining?':inviting?'Invite your kakis':'Choose your party'}</Text>{!busy?<CloseButton label="Close party options" onPress={onClose}/>:null}</View>
+   {fromPost?<Text style={s.note}>From your feed: {fromPost}</Text>:null}
    {busy?<Text accessibilityLiveRegion="polite">{party?'Joining your party…':'One moment…'}</Text>:null}
    {error?<Text accessibilityRole="alert" style={s.error}>{error}</Text>:null}
    {notice&&!inviting?<Text accessibilityLiveRegion="polite" style={s.note}>{notice}</Text>:null}

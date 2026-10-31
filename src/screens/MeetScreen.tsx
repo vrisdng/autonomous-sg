@@ -29,7 +29,7 @@ import { directions, parseSingaporeInput, RouteResult, singaporeInput, validLoca
 import { GeoLocation, Participant, Place, PlanDraft, Tab, TransportMode } from '../types';
 import { colors } from '../theme';
 
-export function MeetScreen({ go, onOpenParty }: { go: (tab: Tab) => void; onOpenParty: (code?:string) => void }) {
+export function MeetScreen({ go, onOpenParty, fromPost }: { go: (tab: Tab) => void; onOpenParty: (code?:string) => void; fromPost?: string }) {
   const outing=useOuting();
   const [plan, setPlan] = useState<PlanDraft>();
   const latest = useRef<PlanDraft | undefined>(undefined);
@@ -184,7 +184,7 @@ export function MeetScreen({ go, onOpenParty }: { go: (tab: Tab) => void; onOpen
   const share = () => {
     const current = latest.current ?? plan;
     if (!current?.remote?.published) return;
-    const text = createPlanInviteMessage(current.code);
+    const text = createPlanInviteMessage(current.code, fromPost);
     void copyPlainText(text).then((copied) => {
       setInviteCopied(copied);
       setMessage(copied ? 'Invite copied. Paste it into your group chat.' : `Couldn’t copy automatically. Select and copy this invite: ${text}`);

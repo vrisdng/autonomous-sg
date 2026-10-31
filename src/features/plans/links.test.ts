@@ -26,4 +26,9 @@ describe('plan links', () => {
     vi.stubEnv('EXPO_PUBLIC_APP_URL', 'https://bojio.pages.dev/');
     expect(createPlanInviteMessage('abc234')).toBe('Apple67 · Join our supper party: https://bojio.pages.dev/plan/ABC234\nCode: ABC234');
   });
+
+  it('leads the invite with the post that started the jio', () => {
+    vi.stubEnv('EXPO_PUBLIC_APP_URL', 'https://bojio.pages.dev/');
+    expect(createPlanInviteMessage('abc234', 'Pizza plans, sorted 🍕')).toBe('Apple67 · Saw this and thought of you: Pizza plans, sorted 🍕\nJoin our supper party: https://bojio.pages.dev/plan/ABC234\nCode: ABC234');
+  });
 });

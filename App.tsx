@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { Linking, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Image, Linking, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { retainLastCall } from './src/features/train/lastCallSession';
 import { PartyAccess } from './src/components/PartyAccess';
-import { BaoPeek } from './src/components/BaoPeek';
-import { LiveTop3Dock } from './src/components/LiveTop3';
-import { peekSideFromSearch, tabHasInlineBao } from './src/components/baoPeekLogic';
+import { BaoFeatureMenu, BaoLauncher, FeedPartyStrip } from './src/components/BaoFeatureMenu';
 import { BottomNav } from './src/components/BottomNav';
+import { LiveTop3Dock } from './src/components/LiveTop3';
+import { DiscoveryNav, FeedView } from './src/components/DiscoveryNav';
 import { ScreenTransition } from './src/components/ScreenTransition';
 import { HomeScreen } from './src/screens/HomeScreen';
-import { DiscoveryScreen } from './src/screens/DiscoveryScreen';
+import { DiscoveryScreen, Post } from './src/screens/DiscoveryScreen';
+import { CreatePostScreen } from './src/screens/CreatePostScreen';
 import { MeetScreen } from './src/screens/MeetScreen';
 import { RideScreen } from './src/screens/RideScreen';
 import { SplitScreen } from './src/screens/SplitScreen';
@@ -17,72 +18,91 @@ import { colors } from './src/theme';
 import { getPlanCodeFromUrl } from './src/features/plans/links';
 import { Tab } from './src/types';
 
-const tabFromUrl=():Tab=>{
-  const value=typeof window!=='undefined'?window.location.hash.slice(1):'';
-  return ['home','meet','split','ride','train'].includes(value)?value as Tab:'home';
+const knownTabs: Tab[] = ['home', 'meet', 'split', 'ride', 'train'];
+const tabFromUrl = (): Tab => {
+  const value = typeof window === 'undefined' ? '' : window.location.hash.slice(1);
+  return knownTabs.includes(value as Tab) ? value as Tab : 'home';
 };
-type Section = 'discover' | 'bojio';
-const sectionFromUrl=():Section=>{
-  if(typeof window==='undefined')return 'bojio';
-  return !window.location.hash || window.location.hash==='#discover' ? 'discover' : 'bojio';
-};
+const legacyTabOpen = () => typeof window !== 'undefined' && knownTabs.includes(window.location.hash.slice(1) as Tab);
 
 export default function App() {
+  const [feedView, setFeedView] = useState<FeedView>('home');
   const [tab, setTab] = useState<Tab>(tabFromUrl);
-  const [section,setSection]=useState<Section>(()=>typeof window!=='undefined'&&getPlanCodeFromUrl(window.location.href)?'bojio':sectionFromUrl());
-  const scope=useRef(typeof window!=='undefined'&&typeof window.history.state?.bojioScope==='string'?window.history.state.bojioScope:Math.random().toString(36).slice(2));
-  const scroll=useRef<ScrollView>(null);
-  const writeRoute=(next:Tab,replace=false)=>{
-    if(typeof window!=='undefined'){
-      const url=new URL(window.location.href);url.hash=next;
-      // The outing sheet keeps its own history entry. Tab changes must not copy that flag forward.
-      const {bojioSheet:_sheet,...rest}=window.history.state??{};
-      const state={...rest,bojioScope:scope.current};
-      if(replace)window.history.replaceState(state,'',url);else if(url.href!==window.location.href)window.history.pushState(state,'',url);
-    }
-    setSection('bojio');
-    setTab(next);scroll.current?.scrollTo({y:0,animated:false});
-  };
-  const openDiscover=()=>{
-    if(typeof window!=='undefined'){
-      const url=new URL(window.location.href);url.hash='discover';
-      const {bojioSheet:_sheet,...rest}=window.history.state??{};
-      if(url.href!==window.location.href)window.history.pushState({...rest,bojioScope:scope.current},'',url);
-    }
-    setSection('discover');scroll.current?.scrollTo({y:0,animated:false});
-  };
-  const [incomingPlanCode, setIncomingPlanCode] = useState<string | undefined>(()=>typeof window!=='undefined'?getPlanCodeFromUrl(window.location.href)??undefined:undefined);
-  const [partyOpen,setPartyOpen]=useState(()=>Boolean(typeof window!=='undefined'&&getPlanCodeFromUrl(window.location.href)));
-  const [entryVersion,setEntryVersion]=useState(0);
-  const openParty=(code?:string)=>{setIncomingPlanCode(code);setPartyOpen(true);};
-  const openPartyFromDiscover=()=>{writeRoute('meet');openParty();};
-  const closeParty=()=>{setIncomingPlanCode(undefined);setPartyOpen(false);if(typeof window!=='undefined'&&getPlanCodeFromUrl(window.location.href))window.history.replaceState({...window.history.state,bojioScope:scope.current},'','/#'+tab);};
+  const [bojioOpen, setBojioOpen] = useState(legacyTabOpen);
+  const [baoOpen, setBaoOpen] = useState(false);
+  const [openPost, setOpenPost] = useState<Post>();
+  // The post this outing started from. Session-only: it is feed context, not party data.
+  const [jioPost, setJioPost] = useState<Post>();
+  const [incomingPlanCode, setIncomingPlanCode] = useState<string | undefined>(() => typeof window !== 'undefined' ? getPlanCodeFromUrl(window.location.href) ?? undefined : undefined);
+  const [partyOpen, setPartyOpen] = useState(() => typeof window !== 'undefined' && !!getPlanCodeFromUrl(window.location.href));
+  const [entryVersion, setEntryVersion] = useState(0);
+  const feedScroll = useRef<ScrollView>(null);
+  const popupScroll = useRef<ScrollView>(null);
 
-  useEffect(()=>{
-    if(typeof window==='undefined')return;
-    window.history.replaceState({...window.history.state,bojioScope:scope.current},'',window.location.href);
-    const back=()=>{
-      const code=getPlanCodeFromUrl(window.location.href);
-      setIncomingPlanCode(code??undefined);
-      // Only invite links open the identity gate. Ordinary tab history must keep
-      // the current party mounted instead of unexpectedly dumping people here.
-      setPartyOpen(!!code);
-      setSection(code?'bojio':sectionFromUrl());
-      setTab(tabFromUrl());scroll.current?.scrollTo({y:0,animated:false});
+  const openFeed = (view: FeedView) => {
+    setBojioOpen(false);
+    setFeedView(view);
+    feedScroll.current?.scrollTo({ y: 0, animated: false });
+    if (typeof window !== 'undefined' && legacyTabOpen()) {
+      const url = new URL(window.location.href);
+      url.hash = 'discover';
+      window.history.replaceState(window.history.state, '', url);
+    }
+  };
+  const openDiscover = () => openFeed('home');
+  // Feature navigation stays inside one popup. Only invite links use URLs.
+  const openBojio = (next: Tab) => {
+    setBaoOpen(false);
+    setTab(next);
+    setBojioOpen(true);
+    popupScroll.current?.scrollTo({ y: 0, animated: false });
+  };
+  const closeBojio = () => {
+    setBojioOpen(false);
+    if (typeof window !== 'undefined' && legacyTabOpen()) {
+      const url = new URL(window.location.href);
+      url.hash = 'discover';
+      window.history.replaceState(window.history.state, '', url);
+    }
+  };
+  const openParty = (code?: string) => { if (code) setJioPost(undefined); setIncomingPlanCode(code); setPartyOpen(true); };
+  const jioFromPost = (post: Post) => { setOpenPost(undefined); setJioPost(post); openParty(); };
+  const tripHomeFromPost = (post: Post) => { setOpenPost(undefined); setJioPost(post); openBojio('train'); };
+  const backToPost = () => { closeBojio(); setOpenPost(jioPost); };
+  const closeParty = () => {
+    setIncomingPlanCode(undefined);
+    setPartyOpen(false);
+    if (typeof window !== 'undefined' && getPlanCodeFromUrl(window.location.href)) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('plan');
+      if (url.pathname.toLowerCase().includes('/plan/')) url.pathname = '/';
+      url.hash = 'discover';
+      window.history.replaceState(window.history.state, '', url);
+    }
+  };
+  // Backing out of a post's jio returns to that post, not the top of the feed.
+  const cancelParty = () => {
+    closeParty();
+    if (jioPost && !bojioOpen) { setOpenPost(jioPost); setJioPost(undefined); }
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onBack = () => {
+      const code = getPlanCodeFromUrl(window.location.href);
+      if (code) openParty(code);
+      else if (legacyTabOpen()) { setTab(tabFromUrl()); setBojioOpen(true); }
+      else { setBojioOpen(false); }
     };
-    window.addEventListener('popstate',back);
-    return()=>window.removeEventListener('popstate',back);
-  },[]);
+    window.addEventListener('popstate', onBack);
+    return () => window.removeEventListener('popstate', onBack);
+  }, []);
 
   useEffect(() => {
     const openPlanUrl = (url: string | null) => {
       if (!url) return;
       const code = getPlanCodeFromUrl(url);
-      if (code) {
-        openParty(code);
-        setSection('bojio');
-        setTab('meet');
-      }
+      if (code) openParty(code);
     };
     Linking.getInitialURL().then(openPlanUrl).catch(() => undefined);
     const subscription = Linking.addEventListener('url', ({ url }) => openPlanUrl(url));
@@ -92,73 +112,69 @@ export default function App() {
   const [lastCallKeep, setLastCallKeep] = useState(() => ({ epoch: entryVersion, alive: tab === 'train' }));
   const keep = retainLastCall(lastCallKeep.alive, lastCallKeep.epoch, tab, entryVersion);
   if (keep.alive !== lastCallKeep.alive || keep.epoch !== lastCallKeep.epoch) setLastCallKeep(keep);
-  const screen = tab === 'home' ? <HomeScreen go={writeRoute} onParty={() => openParty()} />
-    : tab === 'meet' ? <MeetScreen go={writeRoute} onOpenParty={openParty} />
-    : tab === 'split' ? <SplitScreen go={writeRoute} />
-    : tab === 'ride' ? <RideScreen go={writeRoute} />
+  const screen = tab === 'home' ? <HomeScreen go={openBojio} onParty={() => openParty()} />
+    : tab === 'meet' ? <MeetScreen go={openBojio} onOpenParty={openParty} fromPost={jioPost?.title} />
+    : tab === 'split' ? <SplitScreen go={openBojio} />
+    : tab === 'ride' ? <RideScreen go={openBojio} />
     : null;
+  const composing = feedView === 'compose' && !bojioOpen;
 
-  return (
-    <SafeAreaView style={[styles.safe,section==='discover'&&styles.discoverSafe]}>
-      <StatusBar barStyle="dark-content" />
-      {section==='discover'?<>
-        <View style={styles.discoverHeader}><Text style={styles.discoverLogo}>Apple67</Text></View>
-        <View style={styles.discoverSectionBar}>
-          <View style={styles.discoverBarSpacer}/>
-          <View style={styles.discoverTabs}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Discover homepage" accessibilityState={{selected:true}} onPress={openDiscover} style={[styles.discoverTab,styles.discoverTabActive]}><Text style={styles.discoverTabActiveText}>For You</Text></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Apple67 app" onPress={()=>writeRoute(tab)} style={styles.discoverTab}><Text style={styles.discoverTabText}>Apple67</Text></Pressable>
-          </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Search restaurants in Apple67" onPress={()=>writeRoute('meet')} style={styles.discoverSearch}><Text style={styles.searchGlyph}>⌕</Text></Pressable>
-        </View>
-      </>:<>
-        <View style={styles.brand}><Text style={styles.wordmark}>Apple<Text style={styles.q}>67</Text></Text><Pressable accessibilityRole="button" accessibilityLabel="Party · create, join or invite" onPress={()=>openParty()} style={{padding:12,borderRadius:24,backgroundColor:colors.lime}}><Text style={{fontWeight:'800',color:colors.ink}}>Party · Invite ↗</Text></Pressable></View>
-        <View style={styles.sectionBar}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Discover homepage" onPress={openDiscover} style={styles.sectionTab}><Text style={styles.sectionTabText}>✦ Discover</Text></Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="Apple67 app" accessibilityState={{selected:true}} onPress={()=>writeRoute(tab)} style={[styles.sectionTab,styles.sectionTabActive]}><Text style={[styles.sectionTabText,styles.sectionTabTextActive]}>Apple67</Text></Pressable>
-        </View>
-      </>}
-      <View style={[styles.stage,section==='discover'&&styles.discoverStage]}>
-        <ScrollView ref={scroll} style={styles.scroll} contentContainerStyle={[styles.content,section==='discover'&&styles.discoverContent]} keyboardShouldPersistTaps="handled">
-          {section==='discover'&&!partyOpen&&!incomingPlanCode?<DiscoveryScreen go={writeRoute} onParty={openPartyFromDiscover}/>:null}
-          {section==='bojio'&&!partyOpen && !incomingPlanCode ? <>
-            {/* Last Call stays mounted after the first visit so the countdown is not wiped on every tap. */}
+  return <SafeAreaView style={[styles.safe, composing && styles.composeSafe]}>
+    <StatusBar barStyle={composing ? 'light-content' : 'dark-content'} />
+    {composing ? <CreatePostScreen onClose={openDiscover} /> : <>
+      <View style={styles.brand}><Text style={styles.logo}>Apple67</Text></View>
+      <View style={styles.feedHeader}><View style={styles.headerSpacer}/><Text style={styles.feedTitle}>{feedView === 'home' ? 'For You' : feedView === 'search' ? 'Search' : feedView === 'activity' ? 'Activity' : 'Profile'}</Text><BaoLauncher onPress={() => setBaoOpen(true)} /></View>
+      {feedView === 'home' ? <FeedPartyStrip onOpen={() => openBojio('meet')} /> : null}
+      <ScrollView ref={feedScroll} style={styles.feedScroll} contentContainerStyle={styles.feedContent} keyboardShouldPersistTaps="handled">
+        <DiscoveryScreen view={feedView as Exclude<FeedView, 'compose'>} selected={openPost} onSelect={setOpenPost} onJio={jioFromPost} onTripHome={tripHomeFromPost} />
+      </ScrollView>
+      <DiscoveryNav active={feedView} onChange={openFeed} />
+    </>}
+
+    {bojioOpen ? <View style={styles.popup} accessibilityViewIsModal>
+      <Pressable accessibilityRole="button" accessibilityLabel="Close Bojio" onPress={closeBojio} style={styles.scrim} />
+      <View style={styles.popupPanel}>
+        <View style={styles.popupHeader}><Text style={styles.popupTitle}>Bojio · {tab === 'home' ? 'Your plan' : tab === 'meet' ? 'Meet' : tab === 'split' ? 'Split' : tab === 'ride' ? 'Share ride' : 'Last Call'}</Text><Pressable accessibilityRole="button" accessibilityLabel="Close Bojio and return to For You" onPress={closeBojio} style={styles.close}><Text style={styles.closeText}>×</Text></Pressable></View>
+        {jioPost ? <Pressable accessibilityRole="button" accessibilityLabel={`Back to post: ${jioPost.title}`} onPress={backToPost} style={styles.origin}><Image source={jioPost.image} accessibilityLabel="Illustrative food photo" resizeMode="cover" style={styles.originPhoto} /><Text numberOfLines={1} style={styles.originTitle}>{jioPost.title}</Text><Text style={styles.originAction}>View post ›</Text></Pressable> : null}
+        <View style={styles.popupStage}>
+          <ScrollView ref={popupScroll} style={styles.popupScroll} contentContainerStyle={styles.popupContent} keyboardShouldPersistTaps="handled">
             <View key={keep.epoch} style={tab === 'train' ? styles.liveTab : styles.parkedTab} accessibilityElementsHidden={tab !== 'train'} importantForAccessibility={tab === 'train' ? 'auto' : 'no-hide-descendants'}>
-              {keep.alive ? <TrainScreen go={writeRoute} /> : null}
+              {keep.alive ? <TrainScreen go={openBojio} /> : null}
             </View>
             {screen ? <ScreenTransition key={entryVersion + ':' + tab}>{screen}</ScreenTransition> : null}
-          </> : null}
-        </ScrollView>
-        {section==='bojio'&&!partyOpen && !incomingPlanCode && !tabHasInlineBao(tab) ? <BaoPeek key={entryVersion+':'+tab} side={peekSideFromSearch()} /> : null}
-        {section==='bojio'?<LiveTop3Dock />:null}
+          </ScrollView>
+          <LiveTop3Dock />
+        </View>
+        <BottomNav active={tab} onChange={openBojio} />
       </View>
-      {section==='bojio'?<BottomNav active={tab} onChange={next=>writeRoute(next)} />:null}
-      {partyOpen||incomingPlanCode?<PartyAccess key={incomingPlanCode??'party'} code={incomingPlanCode} onClose={closeParty} onEntered={()=>{const destination=incomingPlanCode?'meet':tab;scope.current=Math.random().toString(36).slice(2);closeParty();setEntryVersion(v=>v+1);writeRoute(destination,true);}}/>:null}
-    </SafeAreaView>
-  );
+    </View> : null}
+
+    <BaoFeatureMenu visible={baoOpen} onClose={() => setBaoOpen(false)} onNavigate={openBojio} onParty={() => { setJioPost(undefined); openParty(); }} />
+    {partyOpen || incomingPlanCode ? <PartyAccess key={incomingPlanCode ?? 'party'} code={incomingPlanCode} fromPost={jioPost?.title} onClose={cancelParty} onEntered={() => {
+      closeParty();
+      setEntryVersion(version => version + 1);
+      openBojio('meet');
+    }} /> : null}
+  </SafeAreaView>;
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.paper },
-  discoverSafe:{backgroundColor:'#FFFFFF'},
-  brand: { paddingHorizontal: 24, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',width:'100%',maxWidth:720,alignSelf:'center' },
-  wordmark: { color: colors.ink, fontWeight: '900', fontSize: 24, letterSpacing: -1 }, q: { color: colors.coral }, sg: { backgroundColor: colors.lime, color: colors.ink, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, fontWeight: '900', fontSize: 11 },
-  discoverHeader:{width:'100%',maxWidth:720,alignSelf:'center',height:52,alignItems:'center',justifyContent:'center'},
-  discoverLogo:{backgroundColor:'#FFE900',color:'#111111',fontSize:16,fontWeight:'900',fontStyle:'italic',paddingHorizontal:12,paddingVertical:4,borderRadius:99,overflow:'hidden',letterSpacing:-0.9},
-  discoverSectionBar:{width:'100%',maxWidth:720,alignSelf:'center',height:54,flexDirection:'row',alignItems:'center',justifyContent:'space-between',borderBottomWidth:1,borderBottomColor:'#E8E8E8',paddingHorizontal:12},
-  discoverBarSpacer:{width:42},discoverTabs:{flexDirection:'row',height:'100%',gap:24},
-  discoverTab:{height:'100%',paddingHorizontal:4,alignItems:'center',justifyContent:'center'},
-  discoverTabActive:{borderBottomWidth:3,borderBottomColor:'#111111'},
-  discoverTabText:{color:'#777777',fontSize:17,fontWeight:'600'},discoverTabActiveText:{color:'#111111',fontSize:17,fontWeight:'900'},
-  discoverSearch:{width:42,alignItems:'center',justifyContent:'center'},searchGlyph:{color:'#111111',fontSize:33,lineHeight:36},
-  sectionBar:{width:'100%',maxWidth:720,alignSelf:'center',paddingHorizontal:24,flexDirection:'row',gap:8,paddingBottom:10},
-  sectionTab:{paddingHorizontal:18,paddingVertical:10,borderRadius:99,backgroundColor:colors.card,borderWidth:1,borderColor:colors.line},
-  sectionTabActive:{backgroundColor:colors.ink,borderColor:colors.ink},
-  sectionTabText:{color:colors.muted,fontSize:13,fontWeight:'800'},sectionTabTextActive:{color:'#FFFFFF'},
-  stage: { flex: 1, position: 'relative', overflow: 'hidden' },
-  discoverStage:{backgroundColor:'#FFFFFF'},
-  liveTab: { display: 'flex', pointerEvents: 'auto' },
-  parkedTab: { display: 'none', pointerEvents: 'none' },
-  scroll: { flex: 1 }, content: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 32, width: '100%', maxWidth: 720, alignSelf: 'center' },
-  discoverContent:{paddingHorizontal:10,paddingTop:5},
+  safe: { flex: 1, position: 'relative', backgroundColor: '#FFFFFF' },
+  composeSafe: { backgroundColor: '#050505' },
+  brand: { width: '100%', maxWidth: 720, alignSelf: 'center', height: 52, alignItems: 'center', justifyContent: 'center' },
+  logo: { backgroundColor: '#FFE900', color: '#111111', fontSize: 16, fontWeight: '900', fontStyle: 'italic', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 99, overflow: 'hidden' },
+  feedHeader: { width: '100%', maxWidth: 720, alignSelf: 'center', height: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#E8E8E8', paddingHorizontal: 12 },
+  headerSpacer: { width: 76 }, feedTitle: { color: '#111111', fontSize: 18, fontWeight: '900' },
+  feedScroll: { flex: 1 }, feedContent: { width: '100%', maxWidth: 720, alignSelf: 'center', paddingHorizontal: 10, paddingTop: 5, paddingBottom: 32 },
+  popup: { ...StyleSheet.absoluteFillObject, zIndex: 80, alignItems: 'center', justifyContent: 'center', elevation: 10 },
+  scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: '#00000099' },
+  popupPanel: { width: '96%', height: '94%', maxWidth: 720, borderRadius: 22, overflow: 'hidden', backgroundColor: colors.paper },
+  popupHeader: { minHeight: 58, backgroundColor: colors.paper, borderBottomWidth: 1, borderBottomColor: colors.line, paddingLeft: 18, paddingRight: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  popupTitle: { color: colors.ink, fontSize: 19, fontWeight: '900' },
+  close: { width: 46, height: 46, alignItems: 'center', justifyContent: 'center' }, closeText: { color: colors.ink, fontSize: 30 },
+  origin: { minHeight: 46, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFF9C2', paddingHorizontal: 14, paddingVertical: 6 },
+  originPhoto: { width: 34, height: 34, borderRadius: 8, backgroundColor: '#EEEEEE' }, originTitle: { flex: 1, color: '#161616', fontSize: 13, fontWeight: '700' }, originAction: { color: '#111111', fontSize: 12, fontWeight: '800' },
+  popupStage: { flex: 1, position: 'relative', overflow: 'hidden' },
+  popupScroll: { flex: 1 }, popupContent: { width: '100%', paddingHorizontal: 18, paddingTop: 16, paddingBottom: 32 },
+  liveTab: { display: 'flex', pointerEvents: 'auto' }, parkedTab: { display: 'none', pointerEvents: 'none' },
 });
