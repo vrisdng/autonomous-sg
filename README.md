@@ -1,6 +1,10 @@
 # Apple67
 
-**Supper plans, settled.** One link takes a friend group from "jio" to home: pick a place together, scan the bill, share the ride and catch the last train.
+**Stop screenshotting plans. Start making them.**
+
+Apple67 turns a place you discover into a night out with your friends: create a party, swipe to decide, share the ride, split the bill and get home.
+
+**Discover together. Decide together. Go together.**
 
 Free to use · MIT licensed · Singapore-first
 
@@ -14,21 +18,83 @@ Free to use · MIT licensed · Singapore-first
 
 <p align="center"><sub>Current build at phone width. Feed posts are labelled demo content; photos from Unsplash.</sub></p>
 
-## Verdict
+## Great places deserve more than a screenshot
 
-Eating out with friends in Singapore runs through a stack of closed apps: a feed to find food, a chat to argue in, a paid app to split the bill, then a ride app and a map to get home. We studied how those products work and rebuilt the eat-out flow as one free, open-source app.
+You find a cafe on Lemon8 or Xiaohongshu. You screenshot it. You send it to the Telegram group.
 
-We don't replace everything. Apple67 doesn't order delivery or offer restaurant deals, and the savings below only count what it actually replaces.
+“Anyone wants to go?”
+
+Someone suggests another place. Three more screenshots arrive. Half the group hasn't replied. Nobody knows which option everyone actually likes. The recommendation gets buried, and the outing never gets decided.
+
+**Discovery creates the desire. Coordinating the group is where that desire gets lost.**
+
+For friends, that means more admin before a simple meal. For a restaurant, it means interest that may never become a visit. When the conversation moves from a post to a screenshot to a private chat, the connection between discovery and a group decision becomes difficult to follow.
+
+Apple67 keeps the outing together, from the first “jio?” to the last person heading home.
+
+## One party. Three reasons the plan actually happens.
+
+### 1. Makan Swipe — turn “anything lah” into a decision
+
+Start a party, share a link, and let everyone swipe on the same restaurant deck. Likes become a live **Top 3**. The host confirms the group's destination.
+
+The familiar swipe makes contributing easy. The shared ranking makes the result visible. Friends can keep chatting in Telegram while Apple67 holds the plan.
+
+**Built today:** shared parties, restaurant candidates, group swipes, a transparent ranking and host confirmation. The discovery feed links into party creation; its posts are illustrative and do not yet seed the restaurant deck.
+
+**Next:** add places from saved posts or user suggestions, then personalise candidates using the party's preferences. Community posting and sponsored venue discovery belong to this next stage.
+
+### 2. Same Way, Can Share? — make getting there part of the plan
+
+Imagine ten friends leaving supper. Instead of ten people separately working out transport, Apple67 groups compatible riders, orders their drop-offs and splits an entered fare. Public-transport riders get a shared Last Call countdown.
+
+**Built today:** ride-home matching for cars of up to four people, bounded detours, fare splitting and handoffs to Grab or Google Maps. Gojek can be opened from the app. The matching prioritises getting more people sharing, then smaller detours and shorter driving time; it does not compare live fares or guarantee the cheapest booking.
+
+**Next:** coordinate travel to the venue as well as home, and explore partner referral links or group offers. Discounts and commercial partnerships require agreements with the providers.
+
+### 3. SplitLink — finish dinner without starting another spreadsheet
+
+Photograph the receipt. Review the extracted items. Friends open the party link and claim what they ate. Service charge, GST and shared items are allocated, with totals that reconcile to the cent.
+
+**Built today:** receipt scanning, collaborative item claims and manual payment-status confirmation, without requiring guests to create accounts. Actual payments happen outside Apple67.
+
+**The whole evening stays connected:** the people who chose the venue are already there when it is time to share a ride or settle the bill.
+
+## The business opportunity: help interest become action
+
+A restaurant benefits when a group chooses to visit. A transport provider benefits when that group needs a ride. Apple67's opportunity is to connect those moments while giving friends a useful, free coordination tool.
+
+| Moment | Value for the group | Proposed commercial model |
+|---|---|---|
+| Discover a place | Relevant ideas for the next outing | Clearly labelled sponsored venue posts or placements |
+| Choose together | A shortlist the group can act on | Opt-in venue offers or booking referrals, subject to merchant agreements |
+| Travel together | Compatible ride groups and a convenient handoff | Transport referral fees or partner-funded discounts, subject to provider agreements |
+
+**These are business hypotheses, not existing revenue or partnerships.** The current build has no paid placements, affiliate tracking, negotiated discounts or booking integration.
+
+Our proposed rule is simple: sponsorship must be visible, and payment must not secretly change the group's vote ranking. Users should be able to see why a place won. Merchant reporting would need opt-in, aggregate measurement; selecting a venue alone is not proof of a visit or sale.
+
+The model to validate is whether partner revenue from completed, attributable actions can cover the service costs in [the operating-cost model](#6-before-and-after). A free consumer experience needs sustainable economics behind it.
+
+### Start with supper. Expand to shared outings.
+
+Food gives us a clear first use case: discover, decide, travel and settle. The same party workflow could later support fashion shops, camera stores, equipment shopping and other outings friends plan together. Those categories are a roadmap, not current product coverage.
+
+## Built for Autonomous SG 2026
+
+We reconstruct the user-facing workflows of closed discovery, bill-splitting and transport products, then connect them in reusable, MIT-licensed code. Our reverse-engineering evidence is observable behaviour, documented interfaces, data inspection and experiments; we do not claim access to proprietary recommendation algorithms.
+
+The competition asks: **“What did you uncover, and how do you know it works?”** [Section 4](#4-what-we-uncovered) records the findings. [Section 3](#3-where-incumbents-fail) links them to the repository's recorded verification. The evidence below comes from existing project records; this README rewrite did not rerun the live checks.
 
 | Rubric criterion | Weight | Our best evidence | Section |
 |---|---|---|---|
-| Cost of the status quo | 20% | S$18–24 a month across three subscriptions, plus ads, closed feeds and group admin | [1](#1-the-old-thing-the-group-eat-out-stack) |
+| Cost of the status quo | 20% | A named paid target: Splitwise Pro receipt scanning and itemisation; wider outing and restaurant marketing costs shown separately | [1](#1-the-old-thing-the-group-eat-out-stack) |
 | Reach of the old thing | 15% | Grab 53.9M monthly users, Xiaohongshu 300M+, Lemon8 about 23.4M, Splitwise tens of millions registered | [2](#2-reach-of-the-old-thing) |
 | Coolness of the new build | 25% | Receipt photo to dishes claimed on friends' phones, no account, then exact ride matching and a group last-train countdown | [5](#5-where-apple67-delivers) |
-| Cost reduction | 25% | Splitwise Pro's S$77–123 a year becomes S$0; a scan costs us under US$0.01 | [6](#6-before-and-after) |
+| Cost reduction | 25% | Free receipt splitting versus the recorded paid-plan benchmark; explicit API operating-cost assumptions | [6](#6-before-and-after) |
 | Open source licensing | 15% | MIT license, public repo, full database setup in one file | [8](#8-open-source) |
 
-The judges ask every team: *"What did you uncover, and how do you know it works?"* Section 4 answers the first part. The Proof column in section 3 answers the second, and section 7 lists what we haven't proved.
+Savings apply to the workflow we replace. Delivery subscriptions, restaurant deals and ride fares remain separate expenses. [Known limits](#7-known-limits) make the current scope explicit.
 
 ## 1. The old thing: the group eat-out stack
 
@@ -44,9 +110,51 @@ A friend group uses a different product for each step, and each one costs money,
 | Ride home | Grab | The fare, plus a [platform fee raised S$0.30 from January 2026](https://malaymail.com/news/singapore/2025/12/24/grab-to-raise-ride-platform-fee-in-singapore-adding-30-cents-from-jan-1/203067) | Coordinated, not replaced |
 | Last train | Google Maps | Free, but it plans one person's journey at a time | Replaced for groups |
 
-Someone paying for all three subscriptions spends **S$18–24 a month**: Burpple Beyond at S$79–99 a year, GrabUnlimited at S$59.88–71.88 a year, and Splitwise Pro at S$76.79–122.73 a year. That converts at US$1 = S$1.28, the rate on 28 October 2026.
+Using the price benchmarks recorded for this submission, someone paying for all three subscriptions would spend **S$18–24 a month**: Burpple Beyond at S$79–99 a year, GrabUnlimited at S$59.88–71.88 a year, and Splitwise Pro at S$76.79–122.73 a year. That converts at US$1 = S$1.28, the rate on 28 October 2026.
 
 That figure is the status quo, not our saving. Section 6 separates the two.
+
+### The restaurant's side: the cost of being discovered
+
+Feeds are free for diners because businesses pay to be seen in them. That makes discovery a second expensive old thing.
+
+**Xiaohongshu platform fees**
+
+| Fee | Amount | Source |
+|---|---|---|
+| Business account verification ("Blue V") | RMB 600 a year, not refunded if rejected. Open to companies in Singapore and Malaysia | [The Red Scroll](https://www.theredscroll.com/insights/xiaohongshu-business-account-setup/), [The China Path](https://www.thechinapath.com/insights/china-social-media-marketing-cost-per-month) |
+| Creator deals through Pugongying, its official creator marketplace | Creator's price plus a 10% platform fee. Paid deals outside Pugongying are prohibited | [The China Path](https://www.thechinapath.com/insights/china-social-media-marketing-cost-per-month), [Jademond](https://www.jademond.com/guides/rednote-marketing) |
+| In-app shop commission | 5–8% once monthly sales pass RMB 10,000 | [Prizm Digital, January 2025](https://prizmdigital.co.nz/xiaohongshu-e-commerce-shop-guide/), may be outdated |
+| Self-serve post boost | From RMB 75 an order | [The Red Scroll](https://www.theredscroll.com/insights/xiaohongshu-marketing-cost/) |
+| App-open splash ads | RMB 80–150 per 1,000 impressions, with a RMB 100,000–300,000 minimum per campaign | [Hashmeta](https://hashmeta.com/blog/xiaohongshu-marketing-costs-complete-budget-breakdown-for-brand-success/) |
+
+**Creator fees per post**
+
+| Creator size | Followers | Singapore | Malaysia |
+|---|---|---|---|
+| Nano | 1K–10K | S$150–500 | RM200–800 |
+| Micro | 10K–50K | S$500–2,000 | RM800–3,500 |
+| Mid-tier | 50K–500K | S$2,000–8,000 | RM3,500–15,000 |
+| Macro | 500K–1M | S$8,000–20,000 | RM15,000–35,000 |
+
+These are rate cards from [Hashmeta Singapore](https://hashmeta.com/blog/xiaohongshu-influencer-pricing-singapore-complete-guide-for-brands/) and [Hashmeta Malaysia](https://hashmeta.com/blog/xiaohongshu-influencer-pricing-malaysia-complete-rate-guide-budget-calculator/), an agency that sells influencer marketing, so treat them as estimates.
+
+**Typical monthly budgets**
+
+- **China:** about RMB 66,500 in [The China Path's own model](https://www.thechinapath.com/insights/china-social-media-marketing-cost-per-month), made up of four creator posts (RMB 47,500), ads (RMB 10,000) and one staff member (RMB 9,000).
+- **Malaysia:** about RM3,000–5,500 for a small business, according to [ZenWeb](https://zenweb.my/blog/xiaohongshu-ads-malaysia/), a local agency.
+
+**Lemon8**
+
+- **Ads:** sold through TikTok Ads Manager in six markets: the US, Japan, Thailand, Singapore, Malaysia and Indonesia. We found no published price per 1,000 views.
+- **Verification:** we found no fee.
+- **Creators:** there's no creator fund or open revenue share. An invitation-only program reportedly pays about US$10 per approved post, based on creators' own reports rather than an official rate card.
+
+Source for all three: [MakeInfluence](https://www.makeinfluence.com/en/academy/lemon8-as-an-influencer-marketing-channel-whats-there-in-2026).
+
+**What it adds up to.** A Singapore restaurant pays about S$500–2,000 for one micro-creator post on Xiaohongshu, or about S$550–2,200 by our calculation once the 10% platform fee is added. On delivery orders, GrabFood also takes [18–25% commission](https://klikit.io/zh-CN/learn/food-delivery-commission-fees-singapore-guide), according to a guide from a restaurant software vendor that cites no source. Apple67 has no paid placement: restaurants reach a group through Google's listings and friends' swipes, and pay S$0 to appear.
+
+**How reliable this is.** The verification and Pugongying fees are reported by agencies citing Xiaohongshu's help centre. Creator rates are agency estimates, and Lemon8 creator pay is self-reported.
 
 ## 2. Reach of the old thing
 
@@ -69,8 +177,9 @@ We found no published figure for how many Lemon8 users look at food. Food is a m
 
 | Job | Where it fails | Where Apple67 delivers | Proof today |
 |---|---|---|---|
-| Discover | The post is a dead end. Lemon8's home, search, create, inbox and profile tabs offer no way to turn it into a group plan | One tap from the feed into a shared party | 12 labelled demo posts. Real restaurant candidates come from Google |
-| Decide | The chat has no way to reach an answer, so one person ends up deciding | Everyone swipes the same deck, a live Top 3 updates, and the host confirms | Two separate sessions passed voting and host confirmation on the public URL against the real database |
+| Discover | Moving a recommendation into a separate group chat loses the shared planning context | One tap from the feed into a shared party | 12 labelled demo posts. Real restaurant candidates come from Google |
+| Get discovered (restaurants) | Visibility is bought post by post, at about S$550–2,200 for one micro-creator post on Xiaohongshu | No paid placement. Friends' swipes decide a group's Top 3 | No paid-placement code in this repository. Candidates still start from Google's listings |
+| Decide | Screenshots and replies scatter preferences; one person often has to consolidate the answer | Everyone swipes the same deck, a live Top 3 updates, and the host confirms | Two separate sessions passed voting and host confirmation on the public URL against the real database |
 | Split | Receipt scanning and itemising [sit behind Splitwise Pro](https://www.splitwise.com/pro). Users report a free-tier cap of 2 to 5 expenses a day, which Splitwise doesn't publish | Scan the receipt, friends claim dishes with no account, shares add up to the cent | Two public sessions passed claims, offline retry and paid status. A synthetic English and Chinese receipt read 10% service, 9% GST and the 8.39 total in 5.1 seconds |
 | Ride | Someone works out who shares and the drop order, then enters the stops by hand | Pairs riders, orders drop-offs, splits the entered fare, and opens Grab or Google Maps | A deployed test required all four real driving legs. The Grab link was tested as a URL, not on a physical phone |
 | Last train | Everyone checks alone, and the group finds out too late who has to leave | One leave-by time for the group, checked against LTA service data | A public Orchard to Tampines check produced a full group countdown. A real OneMap and LTA mismatch paused the countdown until a valid route was found |
@@ -95,7 +204,7 @@ We found no published figure for how many Lemon8 users look at food. Food is a m
 
 ## 5. Where Apple67 delivers
 
-**The 60-second demo**
+**The demo: one group, one complete evening**
 
 1. Open the feed, tap a post and create a party with just a name.
 2. Share the link. A friend joins by choosing a name, with no account.
@@ -130,7 +239,9 @@ Provider keys stay in Edge Functions, so none of them reach the app bundle.
 
 ## 6. Before and after
 
-**For users.** Apple67 costs S$0, with no subscription, account or ads.
+**For users.** The current Apple67 build is free to use, with no subscription or ads; guests join without accounts. Proposed sponsored discovery is future work.
+
+The comparisons below retain the submission's recorded price benchmarks, not a fresh regional checkout quote. Splitwise's official Pro page confirms scanning and itemisation are paid features; its App Store pricing could not be independently rechecked during this rewrite. Confirm the target region's price before presenting these savings. Savings apply to someone who would otherwise pay for that workflow, not every free-tier user.
 
 | Item | Before | With Apple67 | Saving we claim |
 |---|---|---|---|
@@ -140,6 +251,8 @@ Provider keys stay in Edge Functions, so none of them reach the app bundle.
 | Group admin | Unmeasured | Unmeasured | None yet |
 
 Splitwise Pro also includes things we don't, such as charts, currency conversion and running balances, so this compares the at-the-table job only.
+
+**For restaurants.** Appearing in Apple67 costs S$0, against about S$550–2,200 for one micro-creator post on Xiaohongshu. We don't count this as a saving, because a paid post buys reach that Apple67 doesn't have yet.
 
 **For whoever runs it.** Free to use isn't the same as free to run. These are the provider prices we checked on 31 October 2026, after each monthly free allowance:
 
@@ -166,12 +279,13 @@ The scan ceiling comes from the code. The function caps output at 4,096 tokens, 
 - **No real-world scan accuracy figure.** Receipt scanning has been tested on synthetic receipts. Photos are sent to Google Gemini.
 - **The feed is a demo.** It holds 12 illustrative posts, with no user posting or personalised ranking.
 - **Restaurant candidates aren't fully open.** Group ranking is public code, but the initial list comes from Google.
+- **Not a marketing channel.** Restaurants can't add or manage a listing, and Apple67 doesn't yet have an audience to compare with these platforms. There's no paid placement today, though [`docs/PRODUCT.md`](docs/PRODUCT.md) lists clearly labelled sponsorship as a possible later model.
 - **Open party access.** Anyone with the link or code can pick an existing guest name, so invites should go to people you trust. Parties hold up to 12 people, and a car takes four riders.
 - **Limited device testing.** Most checks ran in phone-sized browsers rather than on physical phones.
 - **Time saved isn't measured.** We have no number yet for how long a group spends deciding.
 - **The hosted version depends on free tiers.** Google and Gemini calls are metered, so the demo may be rate-limited or paused.
 - **The public pilot is behind this repository.** [bojio.pages.dev](https://bojio.pages.dev) serves an earlier build under the working name Bojio, without the discovery feed. Run it locally for the current version.
-- **Market figures have limits.** Many are third-party estimates or several years old. Section 2 rates each one, and Splitwise's regional pricing may differ.
+- **Market figures have limits.** Many are third-party estimates or several years old, and creator rates are agency estimates. Section 2 rates the usage figures, and Splitwise's regional pricing may differ.
 
 ## 8. Open source
 
@@ -225,7 +339,7 @@ Older docs and the package name still use the working name, Bojio.
 
 ## 10. Sources
 
-Checked 31 October 2026 unless a date is shown. Prices can vary by region.
+Source register retained from the submission, originally marked checked 31 October 2026 unless a date is shown. This editorial revision reconfirmed Splitwise Pro feature availability, not every external statistic or price. Prices can vary by region.
 
 **Prices**
 - Splitwise: [App Store listing](https://apps.apple.com/app/splitwise-bill-splitter/id458023433) shows the three amounts; [Splitwise Pro](https://www.splitwise.com/pro) lists Pro features; [third-party notes on free-tier caps](https://getfinny.app/blog/splitwise-pricing-2026).
@@ -234,6 +348,12 @@ Checked 31 October 2026 unless a date is shown. Prices can vary by region.
 - Grab platform fee: [Malay Mail, December 2025](https://malaymail.com/news/singapore/2025/12/24/grab-to-raise-ride-platform-fee-in-singapore-adding-30-cents-from-jan-1/203067).
 - Exchange rate: [US$1 = S$1.28 on 28 October 2026](https://moneyexchangerate.org/currencyexchange/usd/sgd/6499), an aggregator rate.
 - Provider costs: [Google Maps Platform pricing](https://developers.google.com/maps/billing-and-pricing/pricing), [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing).
+
+**Restaurant marketing costs**
+- Xiaohongshu fees: [The Red Scroll on verification](https://www.theredscroll.com/insights/xiaohongshu-business-account-setup/), [The Red Scroll on marketing costs](https://www.theredscroll.com/insights/xiaohongshu-marketing-cost/), [The China Path](https://www.thechinapath.com/insights/china-social-media-marketing-cost-per-month), [Jademond](https://www.jademond.com/guides/rednote-marketing), [Prizm Digital](https://prizmdigital.co.nz/xiaohongshu-e-commerce-shop-guide/).
+- Creator rates and ads: [Hashmeta Singapore](https://hashmeta.com/blog/xiaohongshu-influencer-pricing-singapore-complete-guide-for-brands/), [Hashmeta Malaysia](https://hashmeta.com/blog/xiaohongshu-influencer-pricing-malaysia-complete-rate-guide-budget-calculator/), [Hashmeta budget guide](https://hashmeta.com/blog/xiaohongshu-marketing-costs-complete-budget-breakdown-for-brand-success/), [ZenWeb](https://zenweb.my/blog/xiaohongshu-ads-malaysia/).
+- Lemon8 creators and ads: [MakeInfluence](https://www.makeinfluence.com/en/academy/lemon8-as-an-influencer-marketing-channel-whats-there-in-2026).
+- GrabFood commission: [Klikit, April 2026](https://klikit.io/zh-CN/learn/food-delivery-commission-fees-singapore-guide), a vendor guide.
 
 **Usage**
 - Grab: [Q2 2026 earnings release](https://www.sec.gov/Archives/edgar/data/0001855612/000185561226000123/a2026q2-earningspressrelea.htm).
