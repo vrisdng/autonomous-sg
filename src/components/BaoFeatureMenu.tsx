@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Ellipse, Path } from 'react-native-svg';
-import { BAO_BODY, BAO_CHEEK, BAO_CREAM, BAO_INK, BAO_PLEATS } from './baoArt';
+import { BAO_INK } from './baoArt';
+import { BaoApple } from './BaoApple';
 import { feedParty } from '../features/plans/feedParty';
 import { activeParty } from '../features/plans/friends';
 import { useOuting } from '../hooks/useOuting';
@@ -67,10 +68,7 @@ function MenuItem({ icon, title, detail, onPress }: { icon: string; title: strin
 export function BaoFace({ size }: { size: number }) {
   return <View style={[styles.faceCircle, { width: size, height: size, borderRadius: size / 2 }]}>
     <Svg width={size * 0.72} height={size * 0.84} viewBox="0 0 120 140">
-      <Path d={BAO_BODY} fill={BAO_CREAM} stroke={BAO_INK} strokeWidth="5" />
-      <Path d={BAO_PLEATS} fill="none" stroke={BAO_INK} strokeWidth="2.7" strokeLinecap="round" />
-      <Ellipse cx="32" cy="76" rx="11" ry="7" fill={BAO_CHEEK} />
-      <Ellipse cx="84" cy="76" rx="11" ry="7" fill={BAO_CHEEK} />
+      <BaoApple />
       <Ellipse cx="45" cy="69" rx="3.4" ry="4" fill={BAO_INK} />
       <Ellipse cx="70" cy="69" rx="3.4" ry="4" fill={BAO_INK} />
       <Path d="M52 82 Q58 87 64 82" fill="none" stroke={BAO_INK} strokeWidth="2.5" strokeLinecap="round" />
