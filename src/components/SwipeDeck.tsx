@@ -1,5 +1,5 @@
 import { useEffect,useRef,useState,useSyncExternalStore } from 'react';
-import { Modal,Pressable,ScrollView,Text,View } from 'react-native';
+import { Modal,Pressable,ScrollView,Text,useWindowDimensions,View } from 'react-native';
 import { Place,PlanDraft } from '../types';
 import { useSwipes } from '../hooks/useSwipes';
 import { Choice,rankSwipes } from '../features/meet/swipes';
@@ -15,6 +15,9 @@ import { RankedRestaurantName } from './RankedRestaurantName';
 const appliedBatches=new Map<string,number>();
 export function SwipeDeck({plan,candidates,onChoose,onActive,batch,mode,onMore,searchBusy,rankingOpen,onCloseRanking,onOpenRanking}:{rankingOpen:boolean;onCloseRanking:()=>void;onOpenRanking:()=>void;batch?:number;mode?:'replace'|'append';onMore?:()=>void;searchBusy?:boolean;plan:PlanDraft;candidates:Place[];onChoose:(p:Place)=>void;onActive:(p:Place|undefined)=>void}){
  const voting=useSwipes(plan);useSyncExternalStore(subscribePlaces,placesRevision);
+ // Grow the card into the Bojio popup: 94% of the window, less the title, home row and nav around it.
+ const {height:windowHeight}=useWindowDimensions();
+ const photoHeight=Math.max(260,Math.round(windowHeight*0.94)-530);
  const [details,setDetails]=useState<Place>(),[reviewId,setReviewId]=useState<string>(),[feedOpen,setFeedOpen]=useState(false),[moving,setMoving]=useState(false);
  const autoStarted=useRef(new Set<string>());
  const startKey=`${plan.code}:${!!plan.remote?.published}`;
@@ -44,7 +47,7 @@ export function SwipeDeck({plan,candidates,onChoose,onActive,batch,mode,onMore,s
  {!voting.state.venues.length&&voting.loaded&&!(searchBusy&&!candidates.length)?<Card><Text>{plan.remote?.role==='guest'?'Waiting for the host to choose a search area and share the restaurant shortlist. Your cards will appear here automatically.':!candidates.length?'Open ··· to pick a neighbourhood and find restaurants.':'Start with these restaurants. Everyone in the shared plan sees the same cards.'}</Text>{plan.remote?.role!=='guest'&&candidates.length?<Button label={voting.busy?'Sharing shortlist…':'Start swiping these restaurants'} onPress={!blocked?start:undefined}/>:null}</Card>:null}
  {voting.state.venues.length?<View style={{gap:12}}>
   <Pressable accessibilityRole="button" accessibilityLabel="Open restaurant discovery feed" onPress={()=>{setReviewId(undefined);setFeedOpen(true);}} style={{borderRadius:24,backgroundColor:colors.card,borderWidth:1,borderColor:colors.line,padding:12,gap:10}}>
-   {current?<RestaurantPhoto place={current} height={260}/>:<View style={{height:180,borderRadius:18,backgroundColor:colors.bambooSoft,alignItems:'center',justifyContent:'center'}}><Text style={{fontSize:40}}>🍽️</Text></View>}
+   {current?<RestaurantPhoto place={current} height={photoHeight}/>:<View style={{height:180,borderRadius:18,backgroundColor:colors.bambooSoft,alignItems:'center',justifyContent:'center'}}><Text style={{fontSize:40}}>🍽️</Text></View>}
    <Text style={{fontSize:22,fontWeight:'900',color:colors.ink}}>{current?.name??'Browse your restaurant shortlist'}</Text>
    <Text style={{fontSize:13,color:colors.muted}}>{mine.length} of {voting.state.venues.length} rated · swipe up for more places, tap for photos and reviews</Text>
    <Text style={{fontSize:16,fontWeight:'800',color:colors.ink}}>Explore restaurants ↗</Text>
