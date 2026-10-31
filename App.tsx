@@ -32,6 +32,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>(tabFromUrl);
   const [bojioOpen, setBojioOpen] = useState(legacyTabOpen);
   const [baoOpen, setBaoOpen] = useState(false);
+  const [baoAnchor, setBaoAnchor] = useState<{ x: number; y: number }>();
   const [openPost, setOpenPost] = useState<Post>();
   // The post this outing started from. Session-only: it is feed context, not party data.
   const [jioPost, setJioPost] = useState<Post>();
@@ -124,21 +125,23 @@ export default function App() {
 
   return <SafeAreaView style={[styles.safe, composing && styles.composeSafe]}>
     <StatusBar barStyle={composing ? 'light-content' : 'dark-content'} />
-    {composing ? <CreatePostScreen onClose={openDiscover} /> : <>
+    <>
       <View style={styles.brand}><Text style={styles.logo}>Apple67</Text></View>
-      <View style={styles.feedHeader}><View style={styles.headerSpacer}/><Text style={styles.feedTitle}>{feedView === 'home' ? 'For You' : feedView === 'search' ? 'Search' : feedView === 'activity' ? 'Activity' : 'Profile'}</Text><BaoLauncher onPress={() => setBaoOpen(true)} /></View>
+      <View style={styles.feedHeader}><Text style={styles.feedTitle}>{feedView === 'home' ? 'For You' : feedView === 'search' ? 'Search' : feedView === 'activity' ? 'Activity' : 'Profile'}</Text></View>
       {feedView === 'home' ? <FeedPartyStrip onOpen={() => openBojio('meet')} /> : null}
       <ScrollView ref={feedScroll} style={styles.feedScroll} contentContainerStyle={styles.feedContent} keyboardShouldPersistTaps="handled">
         <DiscoveryScreen view={feedView as Exclude<FeedView, 'compose'>} selected={openPost} onSelect={setOpenPost} onJio={jioFromPost} onTripHome={tripHomeFromPost} />
       </ScrollView>
       <DiscoveryNav active={feedView} onChange={openFeed} />
-    </>}
+    </>
+    {/* Compose covers the feed instead of replacing it, so likes and saves survive. */}
+    {composing ? <View style={styles.compose}><CreatePostScreen onClose={openDiscover} /></View> : <BaoLauncher onPress={center => { setBaoAnchor(center); setBaoOpen(true); }} />}
 
     {bojioOpen ? <View style={styles.popup} accessibilityViewIsModal>
       <Pressable accessibilityRole="button" accessibilityLabel="Close Bojio" onPress={closeBojio} style={styles.scrim} />
       <View style={styles.popupPanel}>
         <View style={styles.popupHeader}><Text style={styles.popupTitle}>Bojio · {tab === 'home' ? 'Your plan' : tab === 'meet' ? 'Meet' : tab === 'split' ? 'Split' : tab === 'ride' ? 'Share ride' : 'Last Call'}</Text><Pressable accessibilityRole="button" accessibilityLabel="Close Bojio and return to For You" onPress={closeBojio} style={styles.close}><Text style={styles.closeText}>×</Text></Pressable></View>
-        {jioPost ? <Pressable accessibilityRole="button" accessibilityLabel={`Back to post: ${jioPost.title}`} onPress={backToPost} style={styles.origin}><Image source={jioPost.image} accessibilityLabel="Illustrative food photo" resizeMode="cover" style={styles.originPhoto} /><Text numberOfLines={1} style={styles.originTitle}>{jioPost.title}</Text><Text style={styles.originAction}>View post ›</Text></Pressable> : null}
+        {jioPost ? <Pressable accessibilityRole="button" accessibilityLabel={`Back to post: ${jioPost.title}`} onPress={backToPost} style={styles.origin}>{jioPost.image ? <Image source={jioPost.image} accessibilityLabel="Illustrative food photo" resizeMode="cover" style={styles.originPhoto} /> : <View style={[styles.originPhoto, { backgroundColor: jioPost.tint }]} />}<Text numberOfLines={1} style={styles.originTitle}>{jioPost.title}</Text><Text style={styles.originAction}>View post ›</Text></Pressable> : null}
         <View style={styles.popupStage}>
           <ScrollView ref={popupScroll} style={styles.popupScroll} contentContainerStyle={styles.popupContent} keyboardShouldPersistTaps="handled">
             <View key={keep.epoch} style={tab === 'train' ? styles.liveTab : styles.parkedTab} accessibilityElementsHidden={tab !== 'train'} importantForAccessibility={tab === 'train' ? 'auto' : 'no-hide-descendants'}>
@@ -153,7 +156,7 @@ export default function App() {
       </View>
     </View> : null}
 
-    <BaoFeatureMenu visible={baoOpen} onClose={() => setBaoOpen(false)} onNavigate={openBojio} onCreateParty={() => { setJioPost(undefined); openParty(undefined, 'create'); }} onInvite={() => { setJioPost(undefined); openParty(undefined, 'invite'); }} />
+    <BaoFeatureMenu visible={baoOpen} anchor={baoAnchor} onClose={() => setBaoOpen(false)} onNavigate={openBojio} onCreateParty={() => { setJioPost(undefined); openParty(undefined, 'create'); }} onInvite={() => { setJioPost(undefined); openParty(undefined, 'invite'); }} />
     {partyOpen || incomingPlanCode ? <PartyAccess key={incomingPlanCode ?? 'party'} code={incomingPlanCode} start={partyStart} fromPost={jioPost?.title} onClose={cancelParty} onEntered={() => {
       closeParty();
       setEntryVersion(version => version + 1);
@@ -165,10 +168,11 @@ export default function App() {
 const styles = StyleSheet.create({
   safe: { flex: 1, position: 'relative', backgroundColor: '#FFFFFF' },
   composeSafe: { backgroundColor: '#050505' },
+  compose: { ...StyleSheet.absoluteFillObject, zIndex: 75, backgroundColor: '#050505' },
   brand: { width: '100%', maxWidth: 720, alignSelf: 'center', height: 52, alignItems: 'center', justifyContent: 'center' },
   logo: { backgroundColor: '#FFE900', color: '#111111', fontSize: 16, fontWeight: '900', fontStyle: 'italic', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 99, overflow: 'hidden' },
-  feedHeader: { width: '100%', maxWidth: 720, alignSelf: 'center', height: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#E8E8E8', paddingHorizontal: 12 },
-  headerSpacer: { width: 76 }, feedTitle: { color: '#111111', fontSize: 18, fontWeight: '900' },
+  feedHeader: { width: '100%', maxWidth: 720, alignSelf: 'center', height: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderBottomWidth: 1, borderBottomColor: '#E8E8E8', paddingHorizontal: 12 },
+  feedTitle: { color: '#111111', fontSize: 18, fontWeight: '900' },
   feedScroll: { flex: 1 }, feedContent: { width: '100%', maxWidth: 720, alignSelf: 'center', paddingHorizontal: 10, paddingTop: 5, paddingBottom: 32 },
   popup: { ...StyleSheet.absoluteFillObject, zIndex: 80, alignItems: 'center', justifyContent: 'center', elevation: 10 },
   scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: '#00000099' },

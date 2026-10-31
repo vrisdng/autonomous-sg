@@ -1,16 +1,60 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, PanResponder, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Ellipse, Path } from 'react-native-svg';
 import { BAO_BODY, BAO_CHEEK, BAO_CREAM, BAO_INK, BAO_PLEATS } from './baoArt';
 import { feedParty } from '../features/plans/feedParty';
 import { activeParty } from '../features/plans/friends';
 import { useOuting } from '../hooks/useOuting';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 import { Tab } from '../types';
 
-export function BaoLauncher({ onPress }: { onPress: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel="Open Bojio features with Bao" onPress={onPress} style={({ pressed }) => [styles.launcher, pressed && styles.pressed]}>
-    <BaoFace size={33} />
-    <Text style={styles.launcherText}>Jio with Bao</Text>
-  </Pressable>;
+type Point = { x: number; y: number };
+const launcher = { width: 76, height: 74 };
+const dragThreshold = 4;
+
+// Drag anywhere, tap to open. A short press stays a tap; only real movement starts a drag.
+export function BaoLauncher({ onPress }: { onPress: (center: Point) => void }) {
+  const { width, height } = useWindowDimensions();
+  const [dragged, setDragged] = useState<Point>();
+  const reduced = useReducedMotion();
+  const bob = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    bob.setValue(0);
+    if (reduced) return;
+    const ease = Easing.inOut(Easing.sin);
+    const loop = Animated.loop(Animated.sequence([
+      Animated.timing(bob, { toValue: -6, duration: 1400, easing: ease, useNativeDriver: false }),
+      Animated.timing(bob, { toValue: 0, duration: 1400, easing: ease, useNativeDriver: false }),
+    ]));
+    loop.start();
+    return () => loop.stop();
+  }, [reduced, bob]);
+  const clamp = ({ x, y }: Point) => ({
+    x: Math.max(4, Math.min(width - launcher.width - 4, x)),
+    y: Math.max(4, Math.min(height - launcher.height - 4, y)),
+  });
+  // Starts at the feed column's bottom right, clear of the nav.
+  const position = clamp(dragged ?? { x: Math.min(width, (width + 720) / 2) - launcher.width - 12, y: height - launcher.height - 84 });
+  const live = useRef({ position, clamp });
+  live.current = { position, clamp };
+  const origin = useRef(position);
+  // The browser still fires a click when a drag ends. It must not open the menu.
+  const justDragged = useRef(false);
+  const endDrag = () => { setTimeout(() => { justDragged.current = false; }, 100); };
+  const pan = useRef(PanResponder.create({
+    onMoveShouldSetPanResponderCapture: (_, gesture) => Math.abs(gesture.dx) + Math.abs(gesture.dy) > dragThreshold,
+    onPanResponderGrant: () => { justDragged.current = true; origin.current = live.current.position; },
+    onPanResponderMove: (_, gesture) => setDragged(live.current.clamp({ x: origin.current.x + gesture.dx, y: origin.current.y + gesture.dy })),
+    onPanResponderRelease: endDrag,
+    onPanResponderTerminate: endDrag,
+    onPanResponderTerminationRequest: () => false,
+  })).current;
+  return <Animated.View {...pan.panHandlers} style={[styles.launcher, styles.launcherGrab, { left: position.x, top: position.y, transform: [{ translateY: bob }] }]}>
+    <Pressable accessibilityRole="button" accessibilityLabel="Open Bojio features with Bao" onPress={() => { if (!justDragged.current) onPress({ x: position.x + launcher.width / 2, y: position.y + launcher.height / 2 }); }} style={({ pressed }) => [styles.launcherButton, pressed && styles.pressed]}>
+      <View style={styles.launcherFace}><BaoFace size={54} /></View>
+      <Text style={styles.launcherText}>Jio with Bao</Text>
+    </Pressable>
+  </Animated.View>;
 }
 
 export function FeedPartyStrip({ onOpen }: { onOpen: () => void }) {
@@ -23,21 +67,28 @@ export function FeedPartyStrip({ onOpen }: { onOpen: () => void }) {
   </Pressable>;
 }
 
-export function BaoFeatureMenu({ visible, onClose, onNavigate, onCreateParty, onInvite }: {
+export function BaoFeatureMenu({ visible, anchor, onClose, onNavigate, onCreateParty, onInvite }: {
   visible: boolean;
+  anchor?: Point;
   onClose: () => void;
   onNavigate: (tab: Tab) => void;
   onCreateParty: () => void;
   onInvite: () => void;
 }) {
+  const { width, height } = useWindowDimensions();
   const party = activeParty(useOuting().plan);
   const go = (tab: Tab) => { onClose(); onNavigate(tab); };
   const open = (next: () => void) => { onClose(); next(); };
   if (!visible) return null;
+  // Open beside Bao wherever it was dragged: above it in the lower half, below it otherwise.
+  const panelWidth = Math.min(340, width - 24);
+  const center = anchor ?? { x: width / 2, y: 0 };
+  const left = Math.max(12, Math.min(width - panelWidth - 12, center.x - panelWidth / 2));
+  const place = center.y > height / 2 ? { bottom: height - center.y + 46 } : { top: center.y + 46 };
   return <View style={styles.overlay} accessibilityViewIsModal>
       <Pressable accessibilityRole="button" accessibilityLabel="Close Bao menu" onPress={onClose} style={styles.scrim} />
       <View style={styles.column} pointerEvents="box-none">
-        <View style={styles.panel}>
+        <View style={[styles.panel, { left, width: panelWidth }, place]}>
           <View style={styles.heading}>
             <BaoFace size={38} />
             <View style={styles.headingCopy}><Text style={styles.eyebrow}>BOJIO WITH BAO</Text><Text style={styles.title}>What are we doing?</Text></View>
@@ -77,8 +128,11 @@ export function BaoFace({ size }: { size: number }) {
 }
 
 const styles = StyleSheet.create({
-  launcher: { width: 76, minHeight: 52, alignItems: 'center', justifyContent: 'center', gap: 1, padding: 2, zIndex: 10 },
-  launcherText: { color: '#221D18', fontSize: 9, fontWeight: '800' },
+  launcher: { position: 'absolute', width: launcher.width, height: launcher.height, zIndex: 70, elevation: 8 },
+  launcherGrab: { cursor: 'grab', touchAction: 'none', userSelect: 'none' } as object,
+  launcherButton: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
+  launcherFace: { borderRadius: 27, shadowColor: '#000000', shadowOpacity: 0.22, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } },
+  launcherText: { color: '#221D18', fontSize: 9, fontWeight: '800', backgroundColor: '#FFFFFF', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2, overflow: 'hidden' },
   strip: { width: '100%', maxWidth: 720, alignSelf: 'center', minHeight: 54, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFF9C2', paddingHorizontal: 12, paddingVertical: 7 },
   stripTitle: { color: '#161616', fontSize: 14, fontWeight: '800', marginTop: 1 },
   stripAction: { color: '#111111', fontSize: 13, fontWeight: '800' },
@@ -86,9 +140,8 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.7 },
   overlay: { ...StyleSheet.absoluteFillObject, zIndex: 100, elevation: 20 },
   scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: '#00000066' },
-  // Sits just under the header so it reads as dropping from Bao.
-  column: { width: '100%', maxWidth: 720, alignSelf: 'center', alignItems: 'flex-end', paddingTop: 100, paddingHorizontal: 12 },
-  panel: { width: '100%', maxWidth: 340, backgroundColor: '#FFFFFF', borderRadius: 20, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6 },
+  column: { ...StyleSheet.absoluteFillObject },
+  panel: { position: 'absolute', backgroundColor: '#FFFFFF', borderRadius: 20, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6 },
   heading: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
   headingCopy: { flex: 1 },
   eyebrow: { color: '#776B2B', fontSize: 10, fontWeight: '900', letterSpacing: 1.1 },
