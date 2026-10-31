@@ -1,0 +1,42 @@
+{
+  "name": "bojio",
+  "version": "0.1.0",
+  "private": true,
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:database": "node scripts/verify-database.mjs",
+    "test:preview": "node scripts/verify-preview.mjs",
+    "build:web": "expo export --platform web --clear && node --env-file-if-exists=.env.local scripts/verify-web-build.mjs",
+    "deploy:web": "npm run build:web && wrangler pages deploy dist --project-name bojio --branch main",
+    "dev:travel": "node --env-file-if-exists=.env.server --experimental-strip-types scripts/travel-dev.mjs"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "~6.1.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@supabase/realtime-js": "^2.116.0",
+    "expo": "~54.0.0",
+    "expo-clipboard": "~8.0.8",
+    "expo-crypto": "~15.0.9",
+    "expo-status-bar": "~3.0.8",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-svg": "15.12.1",
+    "react-native-url-polyfill": "^4.0.0",
+    "react-native-web": "^0.21.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@playwright/test": "^1.63.0",
+    "@types/react": "~19.1.10",
+    "typescript": "~5.9.2",
+    "vitest": "^5.0.0",
+    "wrangler": "4.131.2"
+  }
+}

@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+const url=process.env.EXPO_PUBLIC_SUPABASE_URL,key=process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+assert.ok(url&&key);
+const started=Date.now();
+const response=await fetch(url+'/functions/v1/google-places',{method:'POST',headers:{apikey:key,'Content-Type':'application/json'},body:JSON.stringify({action:'nearby',center:{latitude:1.304,longitude:103.8318},radius:2000,rankPreference:'POPULARITY'}),signal:AbortSignal.timeout(25000)});
+const data=await response.json();assert.equal(response.status,200,data.error);
+assert.ok(data.places.length>0&&data.places.length<=20);
+const prices=data.places.filter(p=>p.priceRange||p.priceLevel);
+assert.ok(prices.length>0,'Provider returned price information');
+console.log(JSON.stringify({restaurants:data.places.length,withProviderPrice:prices.length,providerMs:Date.now()-started}));
+console.log('PASS: real capped nearby search returns provider price fields. No restaurant content persisted.');

@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+const url=process.env.EXPO_PUBLIC_SUPABASE_URL,key=process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+assert.ok(url&&key);
+const response=await fetch(url+'/functions/v1/lta',{method:'POST',headers:{apikey:key,'Content-Type':'application/json'},body:JSON.stringify({action:'capabilities'}),signal:AbortSignal.timeout(60000)});
+const data=await response.json();
+console.log(JSON.stringify(data));
+assert.equal(response.status,200,'LTA server setup must succeed');
+assert.ok(data.feeds.every(f=>f.status==='accessible'),'Some LTA feeds are inaccessible; inspect reported availability before integrating.');
+assert.ok(data.feeds.filter(f=>f.feed.startsWith('train')).every(f=>f.downloadLinkAvailable),'Train feed links must be present; HTTP 200 alone is insufficient.');
+const busResponse=await fetch(url+'/functions/v1/lta',{method:'POST',headers:{apikey:key,'Content-Type':'application/json'},body:JSON.stringify({action:'bus-arrivals',stopCode:'83139'}),signal:AbortSignal.timeout(20000)});
+const bus=await busResponse.json();assert.equal(busResponse.status,200);assert.ok(Array.isArray(bus.services));
+assert.ok(bus.services.some(s=>s.arrivals.some(a=>Number.isFinite(Date.parse(a.at)))),'At least one real arrival timestamp must be returned');
+console.log('PASS: live bus arrivals parsed; bus routes returned; train feed links available. Train file contents and final-journey coverage are not yet verified.');

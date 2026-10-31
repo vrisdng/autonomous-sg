@@ -1,0 +1,41 @@
+// Controlled provider data: tests UI behaviour, not provider availability.
+import { chromium } from 'playwright';
+import { expect } from '@playwright/test';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({channel:'msedge',headless:true});
+try{
+ const context=await browser.newContext({viewport:{width:390,height:844}});
+ await context.addInitScript(()=>{if(!localStorage.getItem('bojio.plan-draft.v1'))localStorage.setItem('bojio.plan-draft.v1',JSON.stringify({code:'ABC234',participants:[{id:'a',name:'Alice',origin:'West',location:{label:'West',latitude:1.33,longitude:103.74}}],meetupAt:new Date(Date.now()+3600000).toISOString()}));});
+ let nearby=0,details=0,routeCalls=0,failDetails=false;
+ const places=Array.from({length:4},(_,i)=>({id:`fixture${i}`,displayName:{text:`Fixture restaurant ${i}`},formattedAddress:`Fixture address ${i}`,location:{latitude:1.31+i/1000,longitude:103.8},rating:4.5,userRatingCount:123,regularOpeningHours:{periods:[{open:{day:0,hour:0}}],weekdayDescriptions:['Open 24 hours (test fixture)']},businessStatus:'OPERATIONAL'}));
+ await context.route('**/functions/v1/google-places',async route=>{const body=route.request().postDataJSON();if(body.action==='details'){details++;await route.fulfill(failDetails?{status:429,json:{error:'Fixture quota exhausted'}}:{json:{place:places.find(p=>p.id===body.placeId),checkedAt:new Date().toISOString()}});}else{nearby++;await route.fulfill({json:{places,checkedAt:new Date().toISOString()}});}});
+ await context.route('**/functions/v1/onemap',route=>{routeCalls++;const body=route.request().postDataJSON();return route.fulfill({json:{results:(body.trips??[]).map(t=>({id:t.id,status:'available',route:{startAt:new Date(Date.now()+3600000).toISOString(),endAt:new Date(Date.now()+4800000).toISOString(),durationSeconds:1200,source:'onemap',checkedAt:new Date().toISOString(),steps:[]}}))}});});
+ const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(process.env.BOJIO_PREVIEW_URL||'http://127.0.0.1:8081/');
+ await page.getByRole('button',{name:'Meet',exact:true}).click();
+ await expect(page.getByText('Alice: 20 min · train / bus',{exact:true})).toHaveCount(3);
+ assert.equal(nearby,1);assert.equal(details,0);
+ const before=routeCalls;const start=Date.now();
+ await page.getByRole('button',{name:'Meet here',exact:true}).first().click();
+ await expect(page.getByRole('button',{name:'Selected ✓',exact:true})).toBeVisible();
+ console.log('Fixture selection feedback wall time ms:',Date.now()-start);
+ const navigation=await page.evaluate(()=>{const n=performance.getEntriesByType('navigation')[0];return {domContentLoadedMs:Math.round(n.domContentLoadedEventEnd),loadMs:Math.round(n.loadEventEnd)};});console.log('Browser navigation timing (not Core Web Vitals):',JSON.stringify(navigation));
+ await page.getByText('Where to makan?',{exact:true}).scrollIntoViewIfNeeded();
+ await page.screenshot({path:`${process.env.TEMP}/bojio-google-fixture.png`});
+ await page.waitForTimeout(1000);assert.equal(routeCalls,before,'selecting keeps unchanged journeys');
+ let saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('bojio.plan-draft.v1')));
+ assert.deepEqual(saved.chosenVenue,{source:'google_places',providerPlaceId:'fixture0'});
+ await page.getByRole('button',{name:'Check Last Call →',exact:true}).click();
+ await page.getByRole('button',{name:'Meet',exact:true}).click();
+ assert.equal(nearby,1,'tab reopening does not search again');assert.equal(details,0,'search details reused');
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ await page.reload();await page.getByRole('button',{name:'Meet',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Selected ✓',exact:true})).toBeVisible();
+ await expect(page.getByText('Fixture restaurant 0',{exact:true}).first()).toBeVisible();
+ assert.equal(details,1,'selected reference resolves once after refresh');
+ failDetails=true;await page.reload();await page.getByRole('button',{name:'Meet',exact:true}).click();
+ await expect(page.getByText('Fixture quota exhausted',{exact:true}).first()).toBeVisible();
+ saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('bojio.plan-draft.v1')));assert.equal(saved.chosenVenue.providerPlaceId,'fixture0');
+ assert.deepEqual(errors,[]);
+ console.log('PASS Google UI: initial search, visible automatic routes, selection, ID-only persistence, tab reuse, refresh, failure preservation and phone width.');
+}finally{await browser.close();}

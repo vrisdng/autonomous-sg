@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+let handler;
+globalThis.Deno = { env: { get: (key) => ({ SUPABASE_URL: 'https://test.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'test-only', ONEMAP_ACCESS_TOKEN: 'test-only' })[key] }, serve: (value) => { handler=value; } };
+let running=0, peak=0, reservations=[];
+let providerStatus=200;
+globalThis.fetch = async (url, init) => {
+  if (url.includes('/auth/v1/settings')) return Response.json({}, { status: init.headers.apikey === 'test-key' ? 200 : 401 });
+  if (url.includes('/rpc/consume_travel_budget')) { reservations.push(JSON.parse(init.body).p_units); return Response.json(true); }
+  running++; peak=Math.max(peak,running);
+  await new Promise((resolve)=>setTimeout(resolve,10)); running--;
+  if(providerStatus===401)return Response.json({error:'token expired'},{status:401});
+  if(providerStatus===429 && !new URL(url).searchParams.get('end').startsWith('1.301'))return Response.json({error:'quota'},{status:429});
+  return Response.json({route_summary:{total_time:120}});
+};
+await import('../supabase/functions/onemap/index.ts');
+const trip={from:{latitude:1.31,longitude:103.76},to:{latitude:1.30,longitude:103.85}};
+const body={action:'drive',trips:[1,2,3,4].map((id)=>({...trip,to:{...trip.to,latitude:1.30+id/1000},id:String(id)}))};
+const call=(key='test-key',data=body)=>handler(new Request('https://test/',{method:'POST',headers:{apikey:key},body:JSON.stringify(data)}));
+assert.equal((await call('bad')).status,401); assert.equal(reservations.length,0);
+const result=await call(); assert.equal(result.status,200);
+assert.deepEqual((await result.json()).legs.map((leg)=>leg.seconds),[120,120,120,120]);
+assert.equal(peak,2); assert.deepEqual(reservations,[14]);
+assert.equal((await call('test-key',{action:'drive',trips:[]})).status,400);
+assert.deepEqual(reservations,[14]);
+providerStatus=401;
+const expired=await (await call()).json();assert.ok(expired.legs.every((leg)=>leg.failure==='authentication'));
+providerStatus=429;
+const partial=await (await call()).json();assert.equal(partial.legs[0].seconds,120);assert.ok(partial.legs.slice(1).every((leg)=>leg.failure==='quota'));
+console.log('PASS: handler validates access/input, reserves weighted budget, runs at most two routes concurrently.');
+console.log('PASS: expired OneMap credentials are explicit; partial success survives a provider quota failure.');

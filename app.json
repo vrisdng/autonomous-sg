@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Bojio?",
+    "slug": "bojio",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "bojio",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.blurplab.bojio"
+    },
+    "android": {
+      "package": "com.blurplab.bojio",
+      "adaptiveIcon": {
+        "backgroundColor": "#F3EBE3"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

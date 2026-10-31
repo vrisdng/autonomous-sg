@@ -1,0 +1,101 @@
+// Real Google search and shared database; OneMap is fixture-controlled to isolate this outing-flow check.
+import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
+import { expect } from '@playwright/test';
+import { mkdir } from 'node:fs/promises';
+
+const browser=await chromium.launch({channel:'msedge',headless:true});
+const host=await browser.newContext({viewport:{width:390,height:844}});
+const guest=await browser.newContext({viewport:{width:390,height:844}});
+const a=await host.newPage(),b=await guest.newPage();
+for(const context of [host,guest])await context.route('**/functions/v1/onemap',route=>{
+ const body=route.request().postDataJSON();
+ if(body.action==='search')return route.fulfill({json:{locations:[body.query.includes('Clementi')?{label:'3150 COMMONWEALTH AVENUE WEST CLEMENTI MRT',latitude:1.315,longitude:103.765}:{label:'13 ORCHARD ROAD DHOBY GHAUT MRT',latitude:1.3,longitude:103.845}]}});
+ return route.fulfill({json:{results:[]}});
+});
+const previewUrl=process.env.BOJIO_PREVIEW_URL || 'http://127.0.0.1:8081/';
+try{
+ await a.goto(previewUrl);
+ await a.getByRole('button',{name:'Find our halfway supper →'}).click();
+ await a.getByRole('button',{name:'+ Add person',exact:true}).click();
+ await a.getByLabel('Person 1 name',{exact:true}).fill('Host');
+ await a.getByLabel('Starting point · also your return destination',{exact:true}).fill('Clementi MRT');
+ await a.getByRole('button',{name:'Search location',exact:true}).first().click();
+ await a.getByRole('button',{name:/^3150 COMMONWEALTH AVENUE WEST/}).click();
+ await a.getByRole('button',{name:'Meet here',exact:true}).first().click();
+ await a.getByRole('button',{name:'Save shared plan',exact:true}).click();
+ await a.getByText('Shared plan saved. Copy the invite link for friends.',{exact:true}).waitFor();
+ const code=await a.evaluate(()=>JSON.parse(localStorage.getItem('bojio.plan-draft.v1')).code);
+ await host.grantPermissions(['clipboard-read','clipboard-write']);
+ await a.getByRole('button',{name:'Copy invite link',exact:true}).click();
+ const invitation=await a.evaluate(()=>navigator.clipboard.readText());
+ assert.ok(invitation.includes(new URL(previewUrl).origin) && invitation.includes(code), 'Invite must use the current public origin and plan code');
+ await b.goto(`${previewUrl.replace(/\/$/,'')}/plan/${code}`);
+ await b.getByLabel('Your name',{exact:true}).fill('Guest');
+ await b.getByLabel('Your starting and return location',{exact:true}).fill('Dhoby Ghaut MRT');
+ await b.getByRole('button',{name:'Search location',exact:true}).first().click();
+ await b.getByRole('button',{name:/^13 ORCHARD ROAD DHOBY GHAUT/}).click();
+ await b.getByRole('button',{name:'Save my entry',exact:true}).click();
+ await b.getByText('Your entry is shared.',{exact:true}).waitFor();
+ await a.getByRole('button',{name:'Refresh shared plan',exact:true}).click();
+ await a.getByRole('button',{name:'Guest',exact:true}).click();
+ await a.getByLabel('Person 2 name',{exact:true}).waitFor();
+ assert.equal(await a.getByLabel('Person 2 name',{exact:true}).inputValue(),'Guest');
+ await a.getByRole('button',{name:'Split',exact:true}).click();
+ await a.getByText('+ Add receipt item',{exact:true}).click();
+ await a.getByPlaceholder('Item name',{exact:true}).fill('Dinner');
+ await a.getByPlaceholder('0.00',{exact:true}).fill('10.01');
+ await a.getByRole('button',{name:'Share bill with group',exact:true}).click();
+ await a.getByRole('button',{name:'Shared bill synced ✓',exact:true}).waitFor();
+ await b.getByRole('button',{name:'Split',exact:true}).click();
+ await b.getByLabel('Claim Dinner for Guest',{exact:true}).waitFor();
+ await guest.setOffline(true);
+ await b.getByLabel('Claim Dinner for Guest',{exact:true}).click();
+ await b.getByText(/Failed to fetch|Network request failed|Load failed|Could not save your claim/i).waitFor();
+ await expect(b.getByLabel('Unclaim Dinner for Guest',{exact:true})).toHaveCount(0);
+ assert.equal(await b.evaluate((code)=>JSON.parse(localStorage.getItem(`bojio.bill-draft.v2:${code}`)).pendingSync,code),false,'failed guest claim must not leave a dirty host-style draft');
+ await guest.setOffline(false);
+ await b.getByLabel('Claim Dinner for Guest',{exact:true}).click();
+ await b.getByLabel('Unclaim Dinner for Guest',{exact:true}).waitFor();
+ await a.getByRole('button',{name:'Refresh shared bill (keep local recovery copy)',exact:true}).click();
+ await a.getByLabel('Unclaim Dinner for Guest',{exact:true}).waitFor();
+ await b.reload();
+ await expect(b.getByLabel('Your name',{exact:true})).toHaveValue('Guest');
+ await expect(b.getByText(/✓ 13 ORCHARD ROAD DHOBY GHAUT/)).toBeVisible();
+ await b.getByRole('button',{name:'Split',exact:true}).click();
+ await b.getByLabel('Unclaim Dinner for Guest',{exact:true}).waitFor();
+ assert.equal(await b.getByPlaceholder('Item name',{exact:true}).isEditable(),false);
+ await b.getByRole('button',{name:'Mark payment sent for Guest',exact:true}).click();
+ await expect(b.getByText('Sent · awaiting host',{exact:true})).toBeVisible();
+ assert.equal(await b.getByRole('button',{name:'Confirm payment received for Guest',exact:true}).count(),0);
+ await a.route('**/rest/v1/rpc/get_bill',async(route)=>{await new Promise((resolve)=>setTimeout(resolve,750));await route.continue();});
+ await a.getByRole('button',{name:'Refresh shared bill (keep local recovery copy)',exact:true}).click();
+ await expect(a.getByRole('button',{name:'Confirm payment received for Guest',exact:true})).toBeDisabled();
+ await expect(a.getByText('Sent · awaiting host',{exact:true})).toBeVisible();
+ await a.getByRole('button',{name:'Confirm payment received for Guest',exact:true}).click();
+ await expect(a.getByText('Received ✓',{exact:true})).toBeVisible();
+ await b.getByRole('button',{name:'Refresh shared bill (keep local recovery copy)',exact:true}).click();
+ await expect(b.getByText('Received ✓',{exact:true})).toBeVisible();
+ await host.setOffline(true);
+ await a.getByPlaceholder('0.00',{exact:true}).fill('10.02');
+ await expect.poll(()=>a.evaluate((code)=>JSON.parse(localStorage.getItem(`bojio.bill-draft.v2:${code}`)).items[0].price,code)).toBe('10.02');
+ await a.getByRole('button',{name:'Home',exact:true}).click();
+ await a.getByRole('button',{name:'Split',exact:true}).click();
+ await expect(a.getByPlaceholder('0.00',{exact:true})).toHaveValue('10.02');
+ await host.setOffline(false);
+ await a.getByRole('button',{name:/^(Sync shared bill|Share bill with group)$/}).click();
+ await a.getByRole('button',{name:'Shared bill synced ✓',exact:true}).waitFor();
+ await expect(a.getByText('Received ✓',{exact:true})).toHaveCount(0);
+ console.log(`PASS: two phone sessions create/join, guest offline claim failure/retry, manual sent/host receipt permissions, offline host edits across navigation/reconnect, changed amount invalidates receipt status. Preview: ${previewUrl}`);
+}catch(error){
+ console.error('Host screen:',await a.locator('body').innerText());
+ console.error('Guest screen:',await b.locator('body').innerText());
+ throw error;
+}finally{
+ const saved=await a.evaluate(()=>JSON.parse(localStorage.getItem('bojio.plan-draft.v1')||'null')).catch(()=>null);
+ await browser.close();
+ if(saved?.remote?.hostToken && saved.remote.published){
+ const response=await fetch(process.env.EXPO_PUBLIC_SUPABASE_URL+'/rest/v1/rpc/delete_plan',{method:'POST',headers:{apikey:process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_code:saved.code,p_host_token:saved.remote.hostToken})});
+ assert.equal(response.ok,true,'Temporary outing cleanup');console.log('Removed only this test outing and its bill/votes.');
+ }
+}
